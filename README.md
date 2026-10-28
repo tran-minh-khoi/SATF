@@ -58,7 +58,7 @@ All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/r
 ### Installing on macOS
 
 1. Open the DMG and drag **SATF** into **Applications**.
-2. Open SATF. The first time, macOS may say it can't verify the developer: **right-click SATF → Open → Open**.
+2. Open SATF. It's signed and notarized by Apple, so it opens right away.
 3. Look for the SATF icon in the menu bar. That's where Settings, Shelf and Add-ons live.
 
 ### Installing on Windows
@@ -67,7 +67,7 @@ All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/r
 2. If Windows shows *"Windows protected your PC"*, click **More info → Run anyway**.
 3. SATF starts with Windows and lives in the system tray (bottom-right corner).
 
-> **Why the warnings?** SATF isn't code-signed yet (signing certificates cost money each year). The source code is right here if you'd like to check it or build it yourself.
+> **Why the Windows warning?** The macOS app is signed and notarized by Apple. The Windows app isn't code-signed yet, so SmartScreen asks once. The source code is right here if you'd like to check it or build it yourself.
 
 ## How it works
 

@@ -48,15 +48,39 @@ done
 cp THIRD_PARTY_NOTICES.md LICENSE "$BUNDLE/Contents/Resources/"
 lipo -create -output "$BUNDLE/Contents/Resources/cwebp" "$CACHE/libwebp-$WEBP-mac-arm64/bin/cwebp" "$CACHE/libwebp-$WEBP-mac-x86-64/bin/cwebp"
 
-echo "▸ Ký ad-hoc…"
-codesign --force --deep --sign - "$BUNDLE"
+# Có chứng chỉ "Developer ID Application" trong Keychain -> ký chuẩn để phát hành; chưa có thì ký ad-hoc (chỉ chạy thử)
+IDENTITY="$(security find-identity -v -p codesigning | grep -o '"Developer ID Application:[^"]*"' | head -1 | tr -d '"' || true)"
+if [ -n "$IDENTITY" ]; then
+  echo "▸ Ký bằng $IDENTITY…"
+  codesign --force --options runtime --timestamp --sign "$IDENTITY" "$BUNDLE/Contents/Resources/cwebp"
+  codesign --force --options runtime --timestamp --entitlements SATF.entitlements --sign "$IDENTITY" "$BUNDLE"
+  codesign --verify --strict --deep "$BUNDLE"
+else
+  echo "▸ Ký ad-hoc (chưa có chứng chỉ Developer ID, máy người dùng sẽ cảnh báo)…"
+  codesign --force --deep --sign - "$BUNDLE"
+fi
 
 echo "▸ Tạo DMG…"
+DMG="$OUT/$APP-$VERSION.dmg"
 STAGE="$OUT/dmg"
 mkdir -p "$STAGE"
 cp -R "$BUNDLE" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "$APP $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$OUT/$APP-$VERSION.dmg" >/dev/null
+hdiutil create -volname "$APP $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
 rm -rf "$STAGE"
 
-echo "✓ Xong: $OUT/$APP.app và $OUT/$APP-$VERSION.dmg"
+# Gửi Apple kiểm tra (notarize) rồi gắn kết quả vào DMG.
+# Cần tạo hồ sơ 1 lần: xcrun notarytool store-credentials satf --apple-id <email> --team-id <TEAM_ID>
+if [ -n "$IDENTITY" ]; then
+  codesign --force --timestamp --sign "$IDENTITY" "$DMG"
+  if xcrun notarytool history --keychain-profile satf >/dev/null 2>&1; then
+    echo "▸ Gửi Apple kiểm tra (1–5 phút)…"
+    xcrun notarytool submit "$DMG" --keychain-profile satf --wait
+    xcrun stapler staple "$DMG"
+    spctl --assess --type open --context context:primary-signature -v "$DMG"
+  else
+    echo "▸ Bỏ qua bước gửi Apple: chưa có hồ sơ 'satf' (xem chú thích trong build.sh)"
+  fi
+fi
+
+echo "✓ Xong: $OUT/$APP.app và $DMG"

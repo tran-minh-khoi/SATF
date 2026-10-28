@@ -46,11 +46,11 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 | **macOS** | [SATF-1.0.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
 | **Windows** | [SATF-Setup-1.0.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
 
-**macOS:** mở DMG, kéo SATF vào Applications. Lần đầu mở mà máy báo không xác minh được nhà phát triển: **chuột phải vào SATF → Open → Open**.
+**macOS:** mở DMG, kéo SATF vào Applications rồi mở là chạy (app đã được Apple ký và kiểm tra).
 
 **Windows:** chạy SATF-Setup, chọn ngôn ngữ và các gói muốn tải (bỏ qua cũng được). Nếu hiện *"Windows protected your PC"*: bấm **More info → Run anyway**.
 
-> App chưa có chữ ký số (chứng chỉ ký mất phí hằng năm) nên máy sẽ cảnh báo lần đầu. Mã nguồn có sẵn ở đây để bạn kiểm tra hoặc tự build.
+> Bản macOS đã được Apple ký và kiểm tra. Bản Windows chưa có chữ ký số nên SmartScreen hỏi một lần. Mã nguồn có sẵn ở đây để bạn kiểm tra hoặc tự build.
 
 ## Cách dùng
 
