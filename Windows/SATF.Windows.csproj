@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>SATF</AssemblyName>
+    <RootNamespace>SATF</RootNamespace>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- Thông tin hiện trong Properties → Details của SATF.exe -->
+    <Version>1.0.0</Version>
+    <Product>SATF</Product>
+    <AssemblyTitle>SATF</AssemblyTitle>
+    <Description>SATF – Kéo, lắc, đổi file</Description>
+    <Company>Tran Minh Khoi</Company>
+    <Authors>Tran Minh Khoi</Authors>
+    <Copyright>© 2026 Tran Minh Khoi · tranminhkhoi.dev</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="AppIcon.png" />
+  </ItemGroup>
+</Project>

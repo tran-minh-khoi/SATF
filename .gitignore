@@ -1,0 +1,11 @@
+# Build
+build/
+.cache/
+Windows/bin/
+Windows/obj/
+
+# Icon tạo tự động từ assets/logo.png khi build
+Windows/AppIcon.ico
+Windows/AppIcon.png
+
+.DS_Store

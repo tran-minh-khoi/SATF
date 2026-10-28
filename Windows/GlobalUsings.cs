@@ -1,0 +1,12 @@
+global using Color = System.Windows.Media.Color;
+global using Point = System.Windows.Point;
+global using Size = System.Windows.Size;
+global using Button = System.Windows.Controls.Button;
+global using DataFormats = System.Windows.DataFormats;
+global using DragDropEffects = System.Windows.DragDropEffects;
+global using DragEventArgs = System.Windows.DragEventArgs;
+global using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+global using DataObject = System.Windows.DataObject;
+global using HorizontalAlignment = System.Windows.HorizontalAlignment;
+global using VerticalAlignment = System.Windows.VerticalAlignment;
+global using static SATF.Lang;
