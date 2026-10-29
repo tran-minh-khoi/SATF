@@ -932,12 +932,16 @@ func finish() {
         DispatchQueue.main.async {
             synthesize()
             try! writeWav(wavURL)
-            Task { await mux(); exit(0) }
+            // Ghép tiếng lỗi thì thoát mã khác 0 để promo.sh báo lỗi, không báo xong giả
+            Task {
+                let ok = await mux()
+                exit(ok ? 0 : 1)
+            }
         }
     }
 }
 
-func mux() async {
+func mux() async -> Bool {
     do {
         let comp = AVMutableComposition()
         let v = AVURLAsset(url: silentURL), a = AVURLAsset(url: wavURL)
@@ -950,7 +954,11 @@ func mux() async {
         try await ex.export(to: finalURL, as: .mp4)
         try? FileManager.default.removeItem(at: silentURL)
         print("✓", finalURL.path)
-    } catch { print("mux failed:", error) }
+        return true
+    } catch {
+        FileHandle.standardError.write(Data("mux failed: \(error)\n".utf8))
+        return false
+    }
 }
 
 // Cho menu tròn chạy xong hiệu ứng xuất hiện của chính nó rồi mới bắt đầu quay
