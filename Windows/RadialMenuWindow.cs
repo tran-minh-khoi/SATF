@@ -315,10 +315,10 @@ public class RadialMenuWindow : Window
             bool active = item == null && _expanded == side && !hovered;
             var c = seg.Tint;
 
-            seg.Path.Fill = disabled ? new SolidColorBrush(Color.FromArgb(0x10, 0xFF, 0xFF, 0xFF))
+            seg.Path.Fill = disabled ? new SolidColorBrush(Color.FromArgb(0xD9, 0x2A, 0x2A, 0x31))   // tắt: vẫn có nền tối như bản Mac, không trong suốt
                 : hovered ? new LinearGradientBrush(Color.FromRgb((byte)Math.Min(255, c.R + 40), (byte)Math.Min(255, c.G + 40), (byte)Math.Min(255, c.B + 40)), c, 90)
                 : new SolidColorBrush(Color.FromArgb(active ? (byte)0xE6 : (byte)0xD9, (byte)(0x24 + c.R * (active ? 0.35 : 0.18)), (byte)(0x24 + c.G * (active ? 0.35 : 0.18)), (byte)(0x2C + c.B * (active ? 0.35 : 0.18))));
-            seg.Path.Stroke = hovered ? new SolidColorBrush(Color.FromArgb(0x8C, 0xFF, 0xFF, 0xFF)) : new SolidColorBrush(Color.FromArgb(disabled ? (byte)0x1A : (byte)0x73, c.R, c.G, c.B));
+            seg.Path.Stroke = hovered ? new SolidColorBrush(Color.FromArgb(0x8C, 0xFF, 0xFF, 0xFF)) : (disabled ? new SolidColorBrush(Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF)) : new SolidColorBrush(Color.FromArgb(0x73, c.R, c.G, c.B)));
             foreach (var t in seg.Texts) t.Foreground = disabled ? UI.Secondary : Brushes.White;
 
             double push = hovered ? 9 : 0;
