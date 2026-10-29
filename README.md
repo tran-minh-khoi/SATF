@@ -16,6 +16,7 @@
 </p>
 
 <p align="center">
+  <a href="https://mktechvn.com/en/satf"><b>Website</b></a> ·
   <a href="#download">Download</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#what-it-converts">What it converts</a> ·
@@ -259,7 +260,8 @@ SATF is released under the [MIT License](LICENSE). Bundled and optional third-pa
 
 Made with 🐾 by **Tran Minh Khoi**
 
-- Website: [tranminhkhoi.dev](https://tranminhkhoi.dev)
+- SATF website: [mktechvn.com/satf](https://mktechvn.com/en/satf)
+- Personal site: [tranminhkhoi.dev](https://tranminhkhoi.dev)
 - Email: [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev)
 
 If SATF saves you a few clicks, a ⭐ on GitHub means a lot!
