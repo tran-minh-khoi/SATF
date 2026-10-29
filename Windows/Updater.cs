@@ -143,6 +143,13 @@ public static class Updater
     {
         var release = Available;
         if (release == null || Installing) return;
+        // Bộ cài Windows chưa có chữ ký số: SHA-256 từ GitHub là lớp kiểm tra duy nhất.
+        // Không có thì không tự chạy, mở trang tải để người dùng tự cài.
+        if (release.Sha256 == null)
+        {
+            Process.Start(new ProcessStartInfo(release.PageUrl) { UseShellExecute = true });
+            return;
+        }
         Installing = true;
         ToastWindow.Show(L($"Downloading SATF {release.Version}…", $"Đang tải SATF {release.Version}…"),
             L("SATF will restart when it's done", "Xong SATF sẽ tự mở lại"), ToastWindow.Style.Working, seconds: null);
@@ -159,9 +166,8 @@ public static class Updater
             }
 
             // 2. File tải về đúng là file trên GitHub
-            if (release.Sha256 != null)
+            await using (var file = File.OpenRead(setup))
             {
-                await using var file = File.OpenRead(setup);
                 var hash = Convert.ToHexString(await SHA256.HashDataAsync(file)).ToLowerInvariant();
                 if (hash != release.Sha256) throw new UpdateException(L("The download is damaged.", "File tải về bị hỏng."));
             }
