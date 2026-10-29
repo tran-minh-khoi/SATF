@@ -51,8 +51,8 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 | Platform | Download | Requirements |
 |---|---|---|
-| **macOS** | [SATF-1.0.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
-| **Windows** | [SATF-Setup-1.0.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
+| **macOS** | [SATF-1.1.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
+| **Windows** | [SATF-Setup-1.1.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
 
 All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/releases).
 

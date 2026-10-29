@@ -2,7 +2,7 @@
 
 All notable changes to SATF are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [1.1.0] — 2026-10-29
 
 ### Added
 - **Merge into one PDF** when you hold several files: PDFs, Word, Excel, PowerPoint, images and text, in the order you picked them.

@@ -17,7 +17,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
     <!-- Thông tin hiện trong Properties → Details của SATF.exe -->
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>SATF</Product>
     <AssemblyTitle>SATF</AssemblyTitle>
     <Description>SATF – Kéo, lắc, đổi file</Description>
