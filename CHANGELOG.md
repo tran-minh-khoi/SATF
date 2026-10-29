@@ -12,6 +12,7 @@ All notable changes to SATF are listed here. Versions follow [Semantic Versionin
 ### Fixed
 - Holding several files of different kinds (for example a ZIP and a photo) left only Copy and Shelf in the menu. ZIP is now always there.
 - macOS: zipping or extracting an Excel/PowerPoint file no longer asks for the Office add-on.
+- Windows: the middle of the radial menu now shows the icon of the file you're holding right away, instead of the SATF logo until you moved the mouse.
 
 ## [1.0.0] — 2026-10-28
 

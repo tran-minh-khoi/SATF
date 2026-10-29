@@ -126,6 +126,27 @@ public class RadialMenuWindow : Window
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(260)) { EasingFunction = ease });
         BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(160)));
         _watch.Start();
+        NudgeCursor();
+    }
+
+    /// Windows chỉ báo cho menu biết đang kéo file nào khi con trỏ di chuyển trên menu.
+    /// Nhích con trỏ 1px rồi trả lại để menu nhận file ngay và hiện đúng icon file, không phải đợi người dùng rê chuột.
+    private void NudgeCursor()
+    {
+        if (!NativeMethods.GetCursorPos(out var start)) return;
+        var back = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) };
+        back.Tick += (s, e) =>
+        {
+            back.Stop();
+            // Người dùng đã tự rê chuột đi chỗ khác thì thôi
+            if (NativeMethods.GetCursorPos(out var now) && now.x == start.x + 1 && now.y == start.y)
+                NativeMethods.SetCursorPos(start.x, start.y);
+        };
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        {
+            if (_files.Count > 0 || !NativeMethods.SetCursorPos(start.x + 1, start.y)) return;
+            back.Start();
+        });
     }
 
     private void SetFiles(IEnumerable<string> files)
@@ -367,7 +388,7 @@ public class RadialMenuWindow : Window
     {
         var grid = new Grid { Width = 48, Height = 48 };
         if (_files.Count > 0) grid.Children.Add(new Image { Source = UI.FileIcon(_files[0]), Width = 40, Height = 40 });
-        else grid.Children.Add(new Image { Source = UI.AppIcon, Width = 40, Height = 40 });
+        else grid.Children.Add(UI.Glyph("\uE8A5", 30, UI.Secondary));   // chưa biết file nào: icon tài liệu chung, không phải logo app
         if (_files.Count > 1)
         {
             grid.Children.Add(new Border
