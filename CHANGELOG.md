@@ -2,6 +2,20 @@
 
 All notable changes to SATF are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [1.2.1] — 2026-10-29
+
+### Added
+- **Automatic updates.** SATF checks GitHub for a new version when it starts and once a day, and shows a notification you can click to update. It downloads the new version, checks it, installs it and restarts by itself.
+  - macOS: the download must match GitHub's SHA-256 and be signed with SATF's Apple Developer ID and notarized before it replaces the app.
+  - Windows: the installer must match GitHub's SHA-256, then installs silently over the current version.
+- **Check for Updates…** in the menu bar / tray menu, and an **Updates** section in Settings (turn automatic checks off, check now).
+
+### Changed
+- Windows installer: updates install into the folder SATF is already in, and keep your "Start with Windows" choice.
+
+### Note
+- Versions before 1.2.1 can't update themselves: download 1.2.1 once from the website or GitHub. From then on, updates are automatic.
+
 ## [1.2.0] — 2026-10-29
 
 ### Added

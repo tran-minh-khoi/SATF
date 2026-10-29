@@ -30,6 +30,16 @@ func info(_ url: URL) -> String {
 var failures = 0
 func check(_ ok: Bool, _ msg: String) { print((ok ? "PASS " : "FAIL ") + msg); if !ok { failures += 1 } }
 
+// Tự cập nhật: so phiên bản, đọc dữ liệu release của GitHub
+check(Updater.isNewer("1.2.1", than: "1.2.0") && Updater.isNewer("1.10.0", than: "1.9.9") && !Updater.isNewer("1.2.0", than: "1.2.0") && !Updater.isNewer("1.2", than: "1.2.0"), "update: version compare")
+let releaseJSON = """
+{"tag_name":"v1.2.1","html_url":"https://github.com/tran-minh-khoi/SATF/releases/tag/v1.2.1","draft":false,"prerelease":false,
+ "assets":[{"name":"SATF-1.2.1.dmg","browser_download_url":"https://github.com/tran-minh-khoi/SATF/releases/download/v1.2.1/SATF-1.2.1.dmg","digest":"sha256:ABCDEF"}]}
+"""
+let parsed = Updater.parse(Data(releaseJSON.utf8))
+check(parsed?.version == "1.2.1" && parsed?.sha256 == "abcdef" && parsed?.dmgURL.lastPathComponent == "SATF-1.2.1.dmg", "update: parse release")
+check(Updater.parse(Data(releaseJSON.replacingOccurrences(of: "https://github.com/tran-minh-khoi/SATF/releases/download/v1.2.1/", with: "https://evil.example/").utf8)) == nil, "update: reject foreign download link")
+
 let photo = dir.appendingPathComponent("photo.jpg"); makePhoto(photo)
 print("source:", info(photo))
 let png = dir.appendingPathComponent("logo.png"); try! FileManager.default.copyItem(at: logo, to: png)

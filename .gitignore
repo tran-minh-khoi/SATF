@@ -9,3 +9,7 @@ Windows/AppIcon.ico
 Windows/AppIcon.png
 
 .DS_Store
+
+# Build output of the Windows test project
+tests/WindowsEditTests/bin/
+tests/WindowsEditTests/obj/

@@ -172,6 +172,20 @@ struct SettingsView: View {
             } header: {
                 Text(L("General", "Hệ thống"))
             }
+
+            Section {
+                Toggle(L("Check for updates automatically", "Tự kiểm tra bản mới"), isOn: $settings.autoUpdateCheck)
+                LabeledContent(L("Version \(Updater.currentVersion)", "Phiên bản \(Updater.currentVersion)")) {
+                    Button(L("Check now", "Kiểm tra ngay")) { Updater.shared.check(userInitiated: true) }
+                }
+            } header: {
+                Text(L("Updates", "Cập nhật"))
+            } footer: {
+                Text(L("New versions are downloaded from GitHub and checked against SATF's Apple Developer ID before installing.",
+                       "Bản mới được tải từ GitHub và kiểm tra chữ ký Apple của SATF trước khi cài."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .frame(minWidth: 420, idealWidth: 460, maxWidth: .infinity, minHeight: 360, idealHeight: height, maxHeight: .infinity)

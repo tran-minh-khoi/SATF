@@ -129,6 +129,10 @@ final class Settings: ObservableObject {
     @Published var resizeEdge: Int {
         didSet { defaults.set(resizeEdge, forKey: "resizeEdge") }
     }
+    /// Tự kiểm tra bản mới trên GitHub (mỗi ngày một lần)
+    @Published var autoUpdateCheck: Bool {
+        didSet { defaults.set(autoUpdateCheck, forKey: "autoUpdateCheck") }
+    }
     static let targetSizeChoices = [200, 500, 1000, 2000, 5000]
     static let resizeEdgeChoices = [1080, 1280, 1920, 2560, 3840]
 
@@ -163,6 +167,7 @@ final class Settings: ObservableObject {
         compressLevel = CompressLevel(rawValue: defaults.string(forKey: "compressLevel") ?? "") ?? .balanced
         targetSizeKB = defaults.object(forKey: "targetSizeKB") as? Int ?? 1000
         resizeEdge = defaults.object(forKey: "resizeEdge") as? Int ?? 1920
+        autoUpdateCheck = defaults.object(forKey: "autoUpdateCheck") as? Bool ?? true
 
         if let display = defaults.string(forKey: "hotKeyDisplay") {
             hotKey = HotKey(keyCode: UInt32(defaults.integer(forKey: "hotKeyCode")),

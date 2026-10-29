@@ -33,6 +33,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Toast.show(L("SATF is ready", "SATF đã sẵn sàng"), Self.howToUse(), seconds: 5)
         AddOnsWindowController.shared.showOnFirstLaunch()
+
+        Updater.shared.onChange = { [weak self] in self?.statusItem.menu = self?.makeMenu() }
+        Updater.shared.start()
     }
 
     /// Ví dụ: "Kéo file, giữ ⇧ Shift rồi lắc nhẹ, hoặc bấm ⌥⇧Space"
@@ -99,6 +102,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         header.toolTip = L("Support SATF", "Ủng hộ SATF")
         menu.addItem(.separator())
 
+        // Có bản mới: hiện ngay đầu menu
+        if let update = Updater.shared.available {
+            let item = menu.addItem(withTitle: L("Update to SATF \(update.version)…", "Cập nhật SATF \(update.version)…"),
+                                    action: #selector(installUpdate), keyEquivalent: "")
+            item.target = self
+            item.image = NSImage(systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(paletteColors: [.white, .systemBlue]))
+            item.attributedTitle = NSAttributedString(string: item.title, attributes: [.font: NSFont.boldSystemFont(ofSize: 13)])
+            menu.addItem(.separator())
+        }
+
         add(menu, L("Open Shelf", "Mở khay"), "tray", #selector(toggleShelf))
         add(menu, L("Add-ons…", "Gói tải thêm…"), "shippingbox", #selector(openSetup))
         add(menu, L("Settings…", "Cài đặt…"), "gearshape", #selector(openSettings), key: ",")
@@ -108,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         add(menu, L("Support SATF…", "Ủng hộ SATF…"), "heart", #selector(openDonate))
         add(menu, L("About SATF", "Giới thiệu SATF"), "info.circle", #selector(openAbout))
+        add(menu, L("Check for Updates…", "Kiểm tra bản mới…"), "arrow.triangle.2.circlepath", #selector(checkForUpdates))
         add(menu, L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), "trash", #selector(uninstall))
         add(menu, L("Quit SATF", "Thoát"), "power", #selector(quit), key: "q")
 
@@ -125,6 +140,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSetup() { AddOnsWindowController.shared.show() }
     @objc private func openSettings() { SettingsWindowController.shared.show() }
     @objc private func quit() { NSApp.terminate(nil) }
+    @objc private func installUpdate() { Updater.shared.install() }
+    @objc private func checkForUpdates() { Updater.shared.check(userInitiated: true) }
 
     // MARK: - Góp ý: mở app mail với thư soạn sẵn
 
