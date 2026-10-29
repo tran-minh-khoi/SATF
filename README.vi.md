@@ -38,6 +38,7 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 - 🗂️ **Khay:** gom file từ nhiều nơi, chọn nhiều file (Ctrl/⌘-bấm, Ctrl+A/⌘A) rồi kéo ra dùng một lần.
 - 🪶 **Nhẹ:** gói nặng (LibreOffice, FFmpeg) chỉ tải khi cần, xoá được bất cứ lúc nào.
 - 🔔 **Thông báo rõ ràng:** "Đang chuyển…", rồi "Xong · lưu trong thư mục Tải về". Bấm vào là mở đúng file.
+- ⬆️ **Tự cập nhật:** có bản mới là SATF báo, bấm một cái là tải, kiểm tra, cài và mở lại. Tắt được trong Cài đặt.
 - 🌏 **Tiếng Anh và Tiếng Việt.**
 - 🧹 **Gỡ sạch**, không để lại gì.
 
@@ -45,8 +46,8 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 
 | Hệ điều hành | Tải về | Yêu cầu |
 |---|---|---|
-| **macOS** | [SATF-1.1.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
-| **Windows** | [SATF-Setup-1.1.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
+| **macOS** | [SATF-1.2.1.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
+| **Windows** | [SATF-Setup-1.2.1.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
 
 **macOS:** mở DMG, kéo SATF vào Applications rồi mở là chạy (app đã được Apple ký và kiểm tra).
 

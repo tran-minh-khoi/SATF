@@ -41,6 +41,8 @@ public class AppSettings
     public int TargetSizeKB { get; set; } = 1000;
     /// Cạnh dài tối đa của nút "Thu nhỏ", tính bằng pixel
     public int ResizeEdge { get; set; } = 1920;
+    /// Tự kiểm tra bản mới trên GitHub (mỗi ngày một lần)
+    public bool AutoUpdateCheck { get; set; } = true;
 
     public static readonly int[] TargetSizeChoices = [200, 500, 1000, 2000, 5000];
     public static readonly int[] ResizeEdgeChoices = [1080, 1280, 1920, 2560, 3840];

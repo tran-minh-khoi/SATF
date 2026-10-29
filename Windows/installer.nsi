@@ -22,6 +22,8 @@ Unicode true
 Name "${APP}"
 OutFile "${OUTFILE}"
 InstallDir "$LOCALAPPDATA\Programs\${APP}"
+; Cập nhật: cài đè đúng thư mục của bản đang có
+InstallDirRegKey HKCU "${UNINST}" "InstallLocation"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 BrandingText "${PUBLISHER} · tranminhkhoi.dev"
@@ -90,6 +92,8 @@ FunctionEnd
 
 Section "$(SecAppName)" SecApp
   SectionIn RO
+  ; Đã cài từ trước (đang cập nhật)? Giữ nguyên lựa chọn "Mở cùng Windows" của người dùng
+  ReadRegStr $R9 HKCU "${UNINST}" "DisplayName"
   ; Đóng bản đang chạy (khi cập nhật)
   nsExec::Exec 'taskkill /f /im SATF.exe'
   Sleep 500
@@ -129,9 +133,21 @@ Section "$(SecAppName)" SecApp
     FileClose $1
   lang_done:
 
-  ; Mở cùng Windows (tắt được trong Cài đặt của SATF)
-  WriteRegStr HKCU "${RUNKEY}" "${APP}" '"$INSTDIR\SATF.exe"'
+  ; Mở cùng Windows (tắt được trong Cài đặt của SATF). Chỉ bật ở lần cài đầu.
+  StrCmp $R9 "" 0 run_done
+    WriteRegStr HKCU "${RUNKEY}" "${APP}" '"$INSTDIR\SATF.exe"'
+  run_done:
 SectionEnd
+
+; SATF tự cập nhật chạy "SATF-Setup.exe /S /RELAUNCH": cài xong thì mở lại SATF
+Function .onInstSuccess
+  ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/RELAUNCH" $1
+  IfErrors relaunch_done
+    Exec '"$INSTDIR\SATF.exe"'
+  relaunch_done:
+FunctionEnd
 
 ; Gói tải thêm: chỉ ghi lại lựa chọn, SATF tự tải ở lần mở đầu tiên (có thanh tiến trình)
 Section /o "$(SecOfficeName)" SecOffice

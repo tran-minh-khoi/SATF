@@ -69,6 +69,9 @@ public partial class App : System.Windows.Application
 
         ToastWindow.Show(L("SATF is ready", "SATF đã sẵn sàng"), AppSettings.Current.HowToUse(), seconds: 5);
         AddOnsWindow.InstallPendingFromInstaller();
+
+        Updater.Changed += () => { if (_notifyIcon != null) _notifyIcon.ContextMenuStrip = MakeMenu(); };
+        Updater.Start();
     }
 
     private void ReloadHotKey() => HotKeyFailed?.Invoke(!_hotKeyManager.Reload());
@@ -120,6 +123,15 @@ public partial class App : System.Windows.Application
             ToolTipText = L("Support SATF", "Ủng hộ SATF"),
         });
         menu.Items.Add(new ToolStripSeparator());
+        // Có bản mới: hiện ngay đầu menu
+        if (Updater.Available is { } update)
+        {
+            menu.Items.Add(new ToolStripMenuItem(L($"Update to SATF {update.Version}…", $"Cập nhật SATF {update.Version}…"), null, (s, e) => _ = Updater.Install())
+            {
+                Font = new Font(menu.Font, System.Drawing.FontStyle.Bold),
+            });
+            menu.Items.Add(new ToolStripSeparator());
+        }
         menu.Items.Add(new ToolStripMenuItem(L("Open Shelf", "Mở khay"), null, (s, e) => ShelfWindow.Toggle()));
         menu.Items.Add(new ToolStripMenuItem(L("Add-ons…", "Gói tải thêm…"), null, (s, e) => AddOnsWindow.Open()));
         menu.Items.Add(new ToolStripMenuItem(L("Settings…", "Cài đặt…"), null, (s, e) => SettingsWindow.ShowSingle()));
@@ -133,6 +145,7 @@ public partial class App : System.Windows.Application
             L("I'd love SATF to…\n\n\nIt would help me because…\n", "Mình muốn SATF có thể…\n\n\nĐiều này giúp mình…\n"))));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem(L("Support SATF…", "Ủng hộ SATF…"), null, (s, e) => DonateWindow.ShowSingle()));
+        menu.Items.Add(new ToolStripMenuItem(L("Check for Updates…", "Kiểm tra bản mới…"), null, (s, e) => _ = Updater.Check(userInitiated: true)));
         menu.Items.Add(new ToolStripMenuItem(L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), null, (s, e) => Uninstall()));
         menu.Items.Add(new ToolStripMenuItem(L("Quit SATF", "Thoát"), null, (s, e) => Shutdown()));
 

@@ -1,0 +1,17 @@
+# Biên dịch bản Mac và chạy scripts/test-mac.sh (thao tác Edit + tự cập nhật) trên máy Mac của GitHub.
+name: macOS tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [Sources/**, tests/EditTests.swift, scripts/test-mac.sh, .github/workflows/mac-tests.yml]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the app
+        run: xcrun swiftc -O -swift-version 5 -sdk "$(xcrun --sdk macosx --show-sdk-path)" -target arm64-apple-macos13.0 Sources/*.swift -o "$RUNNER_TEMP/SATF"
+      - name: Run tests
+        run: ./scripts/test-mac.sh

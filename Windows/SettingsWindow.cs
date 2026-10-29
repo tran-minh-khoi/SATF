@@ -125,6 +125,14 @@ public class SettingsWindow : Window
         root.Children.Add(Section(L("General", "Hệ thống"),
             Check(L("Start with Windows", "Mở cùng Windows"), AppSettings.LaunchAtStartup, v => AppSettings.LaunchAtStartup = v)));
 
+        // Cập nhật
+        var checkNow = new Button { Content = L("Check now", "Kiểm tra ngay"), MinWidth = 150, Padding = new Thickness(8, 4, 8, 4) };
+        checkNow.Click += (s, e) => _ = Updater.Check(userInitiated: true);
+        root.Children.Add(Section(L("Updates", "Cập nhật"),
+            Check(L("Check for updates automatically", "Tự kiểm tra bản mới"), _s.AutoUpdateCheck, v => _s.AutoUpdateCheck = v),
+            Row(L($"Version {AppInfo.Version}", $"Phiên bản {AppInfo.Version}"), checkNow),
+            Note(L("New versions are downloaded from GitHub and checked before installing.", "Bản mới được tải từ GitHub và kiểm tra trước khi cài."))));
+
         // Cuộn được và kéo đổi kích thước được: màn hình thấp vẫn xem hết các mục
         MaxHeight = SystemParameters.WorkArea.Height - 40;
         MinWidth = 400;

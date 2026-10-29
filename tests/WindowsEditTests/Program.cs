@@ -7,6 +7,17 @@ using SATF;
 int failures = 0;
 void Check(bool ok, string msg) { Console.WriteLine((ok ? "PASS " : "FAIL ") + msg); if (!ok) failures++; }
 
+// Tự cập nhật: so phiên bản, đọc dữ liệu release của GitHub
+Check(Updater.IsNewer("1.2.1", "1.2.0") && Updater.IsNewer("1.10.0", "1.9.9") && !Updater.IsNewer("1.2.0", "1.2.0") && !Updater.IsNewer("1.2", "1.2.0"), "update: version compare");
+const string ReleaseJson = """
+{"tag_name":"v1.2.1","html_url":"https://github.com/tran-minh-khoi/SATF/releases/tag/v1.2.1","draft":false,"prerelease":false,
+ "assets":[{"name":"SATF-1.2.1.dmg","browser_download_url":"https://github.com/tran-minh-khoi/SATF/releases/download/v1.2.1/SATF-1.2.1.dmg","digest":"sha256:AA"},
+           {"name":"SATF-Setup-1.2.1.exe","browser_download_url":"https://github.com/tran-minh-khoi/SATF/releases/download/v1.2.1/SATF-Setup-1.2.1.exe","digest":"sha256:ABCDEF"}]}
+""";
+Check(Updater.Parse(ReleaseJson) is { Version: "1.2.1", Sha256: "abcdef" } rel && rel.SetupUrl.EndsWith("SATF-Setup-1.2.1.exe"), "update: parse release");
+Check(Updater.Parse(ReleaseJson.Replace("https://github.com/tran-minh-khoi/SATF/releases/download/v1.2.1/SATF-Setup", "https://evil.example/SATF-Setup")) == null, "update: reject foreign download link");
+Check(Updater.Parse(ReleaseJson.Replace("\"prerelease\":false", "\"prerelease\":true")) == null, "update: skip pre-releases");
+
 var dir = Directory.CreateTempSubdirectory("satf-test").FullName;
 var thread = new Thread(() =>
 {

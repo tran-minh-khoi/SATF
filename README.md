@@ -46,6 +46,7 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 - 🗂️ **Shelf:** a floating tray to collect files from different places. Select several (Ctrl/⌘-click, Ctrl+A/⌘A) and drag them out together, copy them, or share them.
 - 🪶 **Lightweight by default:** heavy add-ons (LibreOffice, FFmpeg) download only when you need them, and you can remove them anytime.
 - 🔔 **Clear feedback:** a progress note for longer jobs, then *"Done · saved in Downloads"*. Click it to show the file.
+- ⬆️ **Updates itself:** when a new version is out, click the notification and SATF downloads it, checks it, installs it and restarts. You can turn this off in Settings.
 - 🌏 **English and Tiếng Việt**, switchable in Settings.
 - 🧹 **Clean uninstall** that removes everything SATF created.
 
@@ -53,8 +54,8 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 | Platform | Download | Requirements |
 |---|---|---|
-| **macOS** | [SATF-1.2.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
-| **Windows** | [SATF-Setup-1.2.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
+| **macOS** | [SATF-1.2.1.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
+| **Windows** | [SATF-Setup-1.2.1.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
 
 All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/releases).
 
@@ -167,12 +168,15 @@ Have another archive app? SATF supports **The Unarchiver, Keka, BetterZip, WinZi
 - **Archives:** which app extracts and which app makes ZIPs.
 - **Add-ons:** see, download or remove them.
 - **Open at login / Start with Windows.**
+- **Updates:** SATF checks for a new version when it starts and once a day; click the notification to update. Turn it off or check now here.
 
 ## Privacy
 
 - Files never leave your computer. SATF converts everything locally.
 - No accounts, no analytics, no tracking.
-- SATF goes online only when **you** choose to download an add-on, and only to the official project sites (libreoffice.org, gyan.dev).
+- SATF goes online only to:
+  - check GitHub for a new SATF version (at launch and once a day; you can turn this off in Settings → Updates). Nothing about you or your files is sent.
+  - download an add-on when **you** choose to, from the official project sites (libreoffice.org, gyan.dev).
 
 ## Uninstall
 
