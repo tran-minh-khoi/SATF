@@ -2,107 +2,150 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="SATF"
-        Width="380" Height="420"
+        Width="324" SizeToContent="Height"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
+        ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         AllowDrop="True">
-    <Border Background="#F21E1E26" CornerRadius="16" BorderBrush="#33FFFFFF" BorderThickness="1.5">
+    <!-- Cùng bố cục với khay bản Mac: thanh tiêu đề có nút icon, lưới ô file, dòng gợi ý -->
+    <Window.Resources>
+        <FontFamily x:Key="Icons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Foreground" Value="#D0D0D8"/>
+            <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="7">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#26FFFFFF"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Ô file: icon thật của file + tên, chọn thì có nền & viền màu xanh -->
+        <Style x:Key="Tile" TargetType="ListBoxItem">
+            <Setter Property="Width" Value="84"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Card" Background="Transparent" BorderBrush="Transparent" BorderThickness="1.5" CornerRadius="9" Padding="4,7,4,6">
+                            <StackPanel>
+                                <Image x:Name="Icon" Source="{Binding Icon}" Width="40" Height="40" RenderTransformOrigin="0.5,0.5">
+                                    <Image.RenderTransform><ScaleTransform/></Image.RenderTransform>
+                                </Image>
+                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="#EDEDF2" TextAlignment="Center"
+                                           TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="30" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Card" Property="Background" Value="#16FFFFFF"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Icon" Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.08" Duration="0:0:0.12"/>
+                                            <DoubleAnimation Storyboard.TargetName="Icon" Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.08" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Icon" Storyboard.TargetProperty="RenderTransform.ScaleX" To="1" Duration="0:0:0.12"/>
+                                            <DoubleAnimation Storyboard.TargetName="Icon" Storyboard.TargetProperty="RenderTransform.ScaleY" To="1" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Card" Property="Background" Value="#38388FFF"/>
+                                <Setter TargetName="Card" Property="BorderBrush" Value="#B3388FFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="Card" Background="#F2202028" CornerRadius="16" BorderBrush="#30FFFFFF" BorderThickness="1" Margin="14" RenderTransformOrigin="0.5,0.5">
+        <Border.RenderTransform><ScaleTransform/></Border.RenderTransform>
         <Border.Effect>
-            <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.4" Color="#000000"/>
+            <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.45" Color="#000000"/>
         </Border.Effect>
-        <Grid Margin="16">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <!-- Title Bar -->
-            <Grid Grid.Row="0" Margin="0,0,0,12">
+        <StackPanel Margin="12">
+            <!-- Thanh tiêu đề: kéo để di chuyển khay -->
+            <Grid x:Name="TitleBar" Background="Transparent" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Image x:Name="AppLogo" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBlock x:Name="TitleText" Grid.Column="1" FontSize="14" FontWeight="SemiBold"
-                           Foreground="White" VerticalAlignment="Center"/>
-                <Button Grid.Column="2" Content="✕" Width="26" Height="26" Background="#22FFFFFF" Foreground="#AAA"
-                        BorderThickness="0" Cursor="Hand" Click="OnCloseClick">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="13"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                <TextBlock Text="&#xE7B8;" FontFamily="{StaticResource Icons}" FontSize="14" Foreground="#388FFF" VerticalAlignment="Center" Margin="2,0,8,0"/>
+                <TextBlock x:Name="TitleText" Grid.Column="1" FontSize="13" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                <Border x:Name="CountBadge" Grid.Column="2" Background="#22FFFFFF" CornerRadius="8" Padding="6,0,6,1" Margin="7,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="CountText" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                </Border>
+                <StackPanel Grid.Column="4" Orientation="Horizontal">
+                    <!-- Kéo nút này = mang tất cả file trong khay đi cùng lúc -->
+                    <Button x:Name="DragAllButton" Style="{StaticResource IconButton}" Content="&#xE7C2;" Cursor="SizeAll"
+                            PreviewMouseLeftButtonDown="OnDragAllDown" PreviewMouseMove="OnDragAllMove"/>
+                    <Button x:Name="CopyAllButton" Style="{StaticResource IconButton}" Content="&#xE8C8;" Click="OnCopyAllClick"/>
+                    <Button x:Name="ClearButton" Style="{StaticResource IconButton}" Content="&#xE74D;" Click="OnClearAllClick"/>
+                    <Button x:Name="CloseButton" Style="{StaticResource IconButton}" Content="&#xE711;" Click="OnCloseClick"/>
+                </StackPanel>
             </Grid>
 
-            <!-- File List or Empty Drop Placeholder -->
-            <Border Grid.Row="1" Background="#11FFFFFF" CornerRadius="10" BorderBrush="#44FFFFFF"
-                    BorderThickness="1.5" Margin="0,0,0,12" AllowDrop="True"
-                    DragOver="OnListDragOver" Drop="OnListDrop">
-                <Grid>
-                    <ListBox x:Name="FileListBox" Background="Transparent" BorderThickness="0"
-                             Foreground="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             PreviewMouseLeftButtonDown="OnListPreviewMouseDown"
-                             MouseMove="OnListMouseMove">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="4,3">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12" Foreground="White"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                    <Button Grid.Column="2" Content="✕" FontSize="10" Width="18" Height="18"
-                                            Background="Transparent" Foreground="#888" BorderThickness="0"
-                                            Tag="{Binding Path}" Click="OnRemoveFileClick"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+            <!-- Vùng file: viền nét đứt, đổi màu khi đang thả file vào -->
+            <Grid Height="236" AllowDrop="True" DragEnter="OnListDragOver" DragOver="OnListDragOver" DragLeave="OnListDragLeave" Drop="OnListDrop">
+                <Border x:Name="DropZone" Background="#08FFFFFF" CornerRadius="12"/>
+                <Rectangle x:Name="DropBorder" RadiusX="12" RadiusY="12" Stroke="#55FFFFFF" StrokeThickness="1.5" StrokeDashArray="4 3" IsHitTestVisible="False"/>
 
-                    <!-- Empty placeholder -->
-                    <StackPanel x:Name="EmptyPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
-                        <TextBlock Text="📥" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                        <TextBlock x:Name="EmptyTitle" FontSize="12" Foreground="#888" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="EmptyHint" FontSize="11" Foreground="#666" HorizontalAlignment="Center" Margin="0,2,0,0"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                <ListBox x:Name="FileListBox" Background="Transparent" BorderThickness="0" Margin="5"
+                         SelectionMode="Extended" ItemContainerStyle="{StaticResource Tile}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         PreviewMouseLeftButtonDown="OnListPreviewMouseDown"
+                         PreviewMouseLeftButtonUp="OnListPreviewMouseUp"
+                         PreviewMouseMove="OnListMouseMove"
+                         MouseDoubleClick="OnListDoubleClick"
+                         SelectionChanged="OnSelectionChanged">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
 
-            <!-- Bottom Actions -->
-            <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Button x:Name="CopyAllButton" Grid.Column="0" Height="34" Margin="0,0,6,0"
-                        Background="#334A90E2" Foreground="White" BorderThickness="0"
-                        FontWeight="Medium" Cursor="Hand" Click="OnCopyAllClick">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
-                <Button x:Name="ClearButton" Grid.Column="1" Height="34" Margin="6,0,0,0"
-                        Background="#22FF4444" Foreground="#FF9999" BorderThickness="0"
-                        FontWeight="Medium" Cursor="Hand" Click="OnClearAllClick">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                <StackPanel x:Name="EmptyPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock x:Name="EmptyIcon" Text="&#xE896;" FontFamily="{StaticResource Icons}" FontSize="30" Foreground="#8A8A96" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="EmptyTitle" FontSize="12" FontWeight="Medium" Foreground="#9A9AA6" HorizontalAlignment="Center"/>
+                </StackPanel>
             </Grid>
-        </Grid>
+
+            <TextBlock x:Name="HintText" FontSize="11" Foreground="#9A9AA6" HorizontalAlignment="Center" Margin="0,9,0,0" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
     </Border>
 </Window>

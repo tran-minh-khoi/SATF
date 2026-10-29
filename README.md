@@ -37,11 +37,12 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 ## Features
 
-- 🎯 **Radial menu right at your cursor:** Convert on the right, Copy and Shelf on the left.
+- 🎯 **Radial menu right at your cursor:** Convert and Edit on the right, Copy and Shelf on the left.
+- ✏️ **Quick image edits:** rotate, resize, compress, squeeze under 1 MB, remove location & camera info, or stack several images into one tall image. Rotate PDFs too.
 - 🔄 **Convert images, PDFs, documents, video and audio:** the most-used formats come first, the rest are one hover away.
 - 📚 **Several files at once:** merge them into **one PDF** (PDFs, Word, Excel, PowerPoint, images, text, in the order you picked them), or compress them into **one ZIP**. A multi-page PDF can also be **split** into one PDF per page.
 - 📦 **Extract archives:** zip, rar, 7z, tar, gz, bz2, xz. Works with The Unarchiver, Keka, 7-Zip, WinRAR and others if you prefer them.
-- 🗂️ **Shelf:** a floating tray to collect files from different places, then drag them out together, copy them, or share them.
+- 🗂️ **Shelf:** a floating tray to collect files from different places. Select several (Ctrl/⌘-click, Ctrl+A/⌘A) and drag them out together, copy them, or share them.
 - 🪶 **Lightweight by default:** heavy add-ons (LibreOffice, FFmpeg) download only when you need them, and you can remove them anytime.
 - 🔔 **Clear feedback:** a progress note for longer jobs, then *"Done · saved in Downloads"*. Click it to show the file.
 - 🌏 **English and Tiếng Việt**, switchable in Settings.
@@ -233,6 +234,12 @@ The version number lives in [`VERSION`](VERSION). All icons are generated from [
 ## Contributing
 
 Pull requests, translations and ideas are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+## Support SATF
+
+SATF is free and open source. If it saves you time, you can buy me a coffee. Scan the VietQR code below with any Vietnamese banking app, or open **Support SATF…** from the menu bar / tray menu. A ⭐ on GitHub helps a lot too.
+
+<p align="center"><img src="assets/donate-vietqr.png" alt="VietQR · MB Bank · Tran Minh Khoi" width="200"></p>
 
 ## License
 

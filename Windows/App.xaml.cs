@@ -112,7 +112,13 @@ public partial class App : System.Windows.Application
     private ContextMenuStrip MakeMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add(new ToolStripMenuItem("SATF") { Enabled = false, Font = new Font(menu.Font, System.Drawing.FontStyle.Bold) });
+        // Bấm vào tên app ở đầu menu = mở cửa sổ ủng hộ
+        menu.Items.Add(new ToolStripMenuItem("SATF  ♥", null, (s, e) => DonateWindow.ShowSingle())
+        {
+            Font = new Font(menu.Font, System.Drawing.FontStyle.Bold),
+            ForeColor = System.Drawing.Color.FromArgb(UI.Donate.R, UI.Donate.G, UI.Donate.B),
+            ToolTipText = L("Support SATF", "Ủng hộ SATF"),
+        });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem(L("Open Shelf", "Mở khay"), null, (s, e) => ShelfWindow.Toggle()));
         menu.Items.Add(new ToolStripMenuItem(L("Add-ons…", "Gói tải thêm…"), null, (s, e) => AddOnsWindow.Open()));
@@ -126,6 +132,7 @@ public partial class App : System.Windows.Application
             L("SATF feature idea", "SATF - Góp ý tính năng"),
             L("I'd love SATF to…\n\n\nIt would help me because…\n", "Mình muốn SATF có thể…\n\n\nĐiều này giúp mình…\n"))));
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new ToolStripMenuItem(L("Support SATF…", "Ủng hộ SATF…"), null, (s, e) => DonateWindow.ShowSingle()));
         menu.Items.Add(new ToolStripMenuItem(L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), null, (s, e) => Uninstall()));
         menu.Items.Add(new ToolStripMenuItem(L("Quit SATF", "Thoát"), null, (s, e) => Shutdown()));
 

@@ -30,11 +30,12 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 
 ## Tính năng
 
-- 🎯 **Menu tròn ngay con trỏ:** bên phải là Chuyển đổi, bên trái là Copy và Khay.
+- 🎯 **Menu tròn ngay con trỏ:** bên phải là Chuyển đổi và Chỉnh sửa, bên trái là Copy và Khay.
+- ✏️ **Sửa ảnh nhanh:** xoay, thu nhỏ, nén, ép xuống dưới 1 MB, xoá vị trí & thông tin máy chụp, ghép nhiều ảnh thành một ảnh dài. PDF cũng xoay được.
 - 🔄 **Đổi ảnh, PDF, tài liệu, video, nhạc:** định dạng hay dùng đứng trước, còn lại rê vào *Thêm* là thấy.
 - 📚 **Nhiều file cùng lúc:** gộp thành **một PDF** (PDF, Word, Excel, PowerPoint, ảnh, văn bản, theo thứ tự bạn chọn file), hoặc nén chung vào **một file ZIP**. PDF nhiều trang cũng **tách** được thành mỗi trang một PDF.
 - 📦 **Giải nén** zip, rar, 7z, tar, gz, bz2, xz. Dùng được cả The Unarchiver, Keka, 7-Zip, WinRAR… nếu bạn thích.
-- 🗂️ **Khay:** gom file từ nhiều nơi rồi kéo ra dùng một lần.
+- 🗂️ **Khay:** gom file từ nhiều nơi, chọn nhiều file (Ctrl/⌘-bấm, Ctrl+A/⌘A) rồi kéo ra dùng một lần.
 - 🪶 **Nhẹ:** gói nặng (LibreOffice, FFmpeg) chỉ tải khi cần, xoá được bất cứ lúc nào.
 - 🔔 **Thông báo rõ ràng:** "Đang chuyển…", rồi "Xong · lưu trong thư mục Tải về". Bấm vào là mở đúng file.
 - 🌏 **Tiếng Anh và Tiếng Việt.**
@@ -115,6 +116,12 @@ Menu SATF → **Báo lỗi…** / **Góp ý tính năng…** (mở thư soạn s
 ```
 
 Chi tiết xem [README tiếng Anh](README.md#build-from-source) và [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Ủng hộ SATF
+
+SATF miễn phí và mã nguồn mở. Nếu app giúp bạn tiết kiệm thời gian, bạn có thể mời mình một ly cà phê: quét mã VietQR bên dưới bằng app ngân hàng bất kỳ, hoặc mở **Ủng hộ SATF…** trong menu của app. Tặng một ⭐ trên GitHub cũng là ủng hộ rất lớn.
+
+<p align="center"><img src="assets/donate-vietqr.png" alt="VietQR · MB Bank · Tran Minh Khoi" width="200"></p>
 
 ## Giấy phép
 

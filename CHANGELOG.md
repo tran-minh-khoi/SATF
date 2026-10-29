@@ -2,6 +2,28 @@
 
 All notable changes to SATF are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [1.2.0] — Unreleased
+
+### Added
+- **Edit** in the radial menu: the right half is now split into **Convert** (top, orange) and **Edit** (bottom, green).
+- Image edits, saved as a new file next to the original:
+  - **Rotate** 90°.
+  - **Resize** to a long side of 1080–3840px.
+  - **Compress** with a Light, Balanced or Strong level (JPG, HEIC, WebP, AVIF).
+  - **Under 1 MB**: picks the best quality that fits a target size (200 KB–5 MB) and shrinks the image only if needed. PNG, TIFF and BMP become JPG.
+  - **Clean info**: removes location and camera details. On macOS the photo itself isn't re-compressed.
+  - **Stack**: several images into one tall image.
+- **Rotate PDF** (all pages, 90°).
+- **Settings → Images**: compress level, target size and resize size.
+- **Shelf**: click, Ctrl/⌘-click and Shift-click to select, Ctrl+A/⌘A to select all, Delete to remove, Esc to deselect. Drag one selected file to take the whole selection, or use the drag handle to take everything. Double-click opens a file, right-click shows Open / Show in Finder or Explorer / Remove.
+- **Support SATF** window with a VietQR code, opened from the name at the top of the menu bar / tray menu.
+
+### Changed
+- **Merge PDF** and **Split pages** moved from Convert to Edit.
+- Image-to-image formats (JPG, PNG, WEBP…) show just their name, bigger, without the same photo icon repeated.
+- macOS: monochrome menu bar icon that follows light and dark menu bars. Light trackpad feedback when moving between menu items, and a bouncier ✓ when done.
+- Windows: the Shelf is redesigned to match the Mac: file icons in a grid, dashed drop zone, icon buttons, and animations when files are added and when the Shelf opens.
+
 ## [1.1.0] — 2026-10-29
 
 ### Added

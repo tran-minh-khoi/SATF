@@ -16,11 +16,11 @@ using Path = System.Windows.Shapes.Path;
 namespace SATF;
 
 /// Menu tròn, cùng bố cục với bản Mac:
-/// nửa trái = Copy (Chỉ copy / Cất vào khay), nửa phải = Chuyển đổi (vòng ngoài là các định dạng).
+/// nửa trái = Copy (dưới) / Khay (trên), nửa phải = Chuyển đổi (trên) / Chỉnh sửa (dưới).
 /// Góc tính bằng độ, 0° = bên phải, tăng theo chiều kim đồng hồ.
 public class RadialMenuWindow : Window
 {
-    private enum Side { Clipboard, Convert }
+    private enum Side { Clipboard, Convert, Edit }
     private enum Status { Idle, Working, Done, Failed }
     private record Item(int Id, string Title, string Glyph, string Action, string Format = "");
 
@@ -36,6 +36,7 @@ public class RadialMenuWindow : Window
         new(1, L("Shelf", "Khay"), "", "SHELF"),
     };
     private List<Item> _allConvert = new();
+    private List<Item> _allEdit = new();
 
     private Side? _expanded;
     private Side? _hoverSide;
@@ -155,7 +156,11 @@ public class RadialMenuWindow : Window
         _files.AddRange(files.Where(File.Exists));
         // Nhiều file: Gộp PDF, các định dạng file nào cũng đổi được, và ZIP (nén chung một file)
         var formats = Converter.GetTargetFormats(_files);
-        _allConvert = formats.Select((f, i) => new Item(i, Converter.Label(f), GlyphFor(f), "CONVERT", f)).ToList();
+        // Đổi giữa các định dạng ảnh: tên định dạng đã đủ rõ, bỏ icon ảnh lặp lại
+        bool allImages = _files.Count > 0 && _files.All(Converter.IsImage);
+        Item Make(string f, int i) => new(i, Converter.Label(f), allImages && Converter.IsImageFormat(f) ? "" : GlyphFor(f), "CONVERT", f);
+        _allConvert = formats.Where(f => !Converter.IsEdit(f)).Select(Make).ToList();
+        _allEdit = formats.Where(Converter.IsEdit).Select(Make).ToList();
         _showAll = false;
         Rebuild();
     }
@@ -169,21 +174,31 @@ public class RadialMenuWindow : Window
         "EXTRACT" => "",
         Converter.MergePdf => "\uE8F1",   // Library: chồng tài liệu
         Converter.SplitPdf => "\uE8C6",   // Cut
+        Converter.Rotate => "\uE7AD",     // Rotate
+        Converter.Resize => "\uE73F",     // BackToWindow: mũi tên chụm vào
+        Converter.Compress => "\uE7B8",   // Package
+        Converter.Shrink => "",            // nhãn "< 1 MB" đã đủ rõ
+        Converter.Clean => "\uE894",      // Clear
+        Converter.Stack => "\uE8A9",      // ViewAll
         _ => "",
     };
 
-    private List<Item> ConvertItems
+    private List<Item> Limited(List<Item> all, Side side)
     {
-        get
-        {
-            if (_showAll || _allConvert.Count <= HalfLimit) return _allConvert;
-            return _allConvert.Take(HalfLimit - 1)
-                .Append(new Item(HalfLimit - 1, L($"{_allConvert.Count - HalfLimit + 1} more", $"Thêm {_allConvert.Count - HalfLimit + 1}"), "", "MORE"))
-                .ToList();
-        }
+        if ((_showAll && _expanded == side) || all.Count <= HalfLimit) return all;
+        return all.Take(HalfLimit - 1)
+            .Append(new Item(HalfLimit - 1, L($"{all.Count - HalfLimit + 1} more", $"Thêm {all.Count - HalfLimit + 1}"), "\uE712", "MORE"))
+            .ToList();
     }
 
-    private List<Item> Items(Side side) => side == Side.Clipboard ? _clipboardItems : ConvertItems;
+    private List<Item> Items(Side side) => side switch
+    {
+        Side.Clipboard => _clipboardItems,
+        Side.Convert => Limited(_allConvert, Side.Convert),
+        _ => Limited(_allEdit, Side.Edit),
+    };
+
+    private static Color TintOf(Side side) => side switch { Side.Clipboard => UI.Clipboard, Side.Convert => UI.Convert, _ => UI.Edit };
 
     private Item? CurrentTarget
     {
@@ -197,13 +212,17 @@ public class RadialMenuWindow : Window
 
     // MARK: - Vẽ
 
-    private static (double, double) SideRange(Side side) => side == Side.Convert ? (270, 450) : (90, 270);
+    /// Phần của vòng trong
+    private static (double, double) SideRange(Side side) => side switch { Side.Clipboard => (90, 270), Side.Convert => (270, 360), _ => (360, 450) };
+
+    /// Nửa phải: trên là Chuyển đổi, dưới là Chỉnh sửa
+    private static Side RightSide(double angle) => angle >= 270 ? Side.Convert : Side.Edit;
 
     private static (double, double) ItemRange(Side side, int index, int count, bool full)
     {
         if (full) { double s = 360.0 / count; return (270 + index * s, 270 + (index + 1) * s); }
         double span = 180.0 / count;
-        if (side == Side.Convert) return (270 + index * span, 270 + (index + 1) * span);
+        if (side != Side.Clipboard) return (270 + index * span, 270 + (index + 1) * span);   // Convert và Edit đều trải hết nửa phải
         double end = 270 - index * span;
         return (end - span, end);
     }
@@ -218,15 +237,16 @@ public class RadialMenuWindow : Window
         _inner.Children.Add(Segment((Side.Clipboard, 0), (90, 180), InnerFrom, InnerTo, UI.Clipboard, _clipboardItems[0].Title, _clipboardItems[0].Glyph, big: true));
         _inner.Children.Add(Segment((Side.Clipboard, 1), (180, 270), InnerFrom, InnerTo, UI.Clipboard, _clipboardItems[1].Title, _clipboardItems[1].Glyph, big: true));
         _inner.Children.Add(Segment((Side.Convert, null), SideRange(Side.Convert), InnerFrom, InnerTo, UI.Convert, L("Convert", "Chuyển đổi"), "", big: true));
+        _inner.Children.Add(Segment((Side.Edit, null), SideRange(Side.Edit), InnerFrom, InnerTo, UI.Edit, L("Edit", "Chỉnh sửa"), "\uE70F", big: true));
 
         if (_expanded is Side open && Items(open).Count > 0)
         {
             var list = Items(open);
-            bool full = open == Side.Convert && _showAll;
+            bool full = open != Side.Clipboard && _showAll;
             foreach (var item in list)
             {
                 _outer.Children.Add(Segment((open, item.Id), ItemRange(open, item.Id, list.Count, full), OuterFrom, OuterTo,
-                    open == Side.Clipboard ? UI.Clipboard : UI.Convert, item.Title, item.Glyph, big: false));
+                    TintOf(open), item.Title, item.Glyph, big: false));
             }
             // Vòng ngoài bung ra
             var scale = new ScaleTransform(0.82, 0.82, CX, CY);
@@ -247,9 +267,9 @@ public class RadialMenuWindow : Window
         double r = (inner + outer) / 2;
 
         var icon = UI.Glyph(glyph, big ? 19 : 15, Brushes.White);
-        var text = new TextBlock { Text = title, FontSize = big ? 12 : 11, FontWeight = FontWeights.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center };
+        var text = new TextBlock { Text = title, FontSize = big ? 12 : (glyph == "" ? 14 : 11), FontWeight = FontWeights.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center };
         var label = new StackPanel { IsHitTestVisible = false, RenderTransformOrigin = new Point(0.5, 0.5) };
-        label.Children.Add(icon);
+        if (glyph != "") label.Children.Add(icon);   // không có icon (JPG, PNG…): chỉ hiện chữ, to hơn
         label.Children.Add(text);
         var labelScale = new ScaleTransform(1, 1);
         label.RenderTransform = labelScale;
@@ -290,7 +310,7 @@ public class RadialMenuWindow : Window
     {
         foreach (var ((side, item), seg) in _segs)
         {
-            bool disabled = side == Side.Convert && item == null && ConvertItems.Count == 0;
+            bool disabled = side != Side.Clipboard && item == null && Items(side).Count == 0;
             bool hovered = _hoverSide == side && _hoverItem == item;
             bool active = item == null && _expanded == side && !hovered;
             var c = seg.Tint;
@@ -330,16 +350,16 @@ public class RadialMenuWindow : Window
                 {
                     "COPY" => "Copy file",
                     "SHELF" => L("Keep on the shelf for later", "Cất vào khay để dùng sau"),
-                    "MORE" => L("See all formats", "Xem tất cả định dạng"),
-                    _ when item.Format == "EXTRACT" => L("Extract here", "Giải nén tại đây"),
-                    _ when item.Format == Converter.MergePdf => L($"Merge {_files.Count} files into one PDF", $"Gộp {_files.Count} file thành một PDF"),
-                    _ when item.Format == Converter.SplitPdf => L("One PDF per page", "Tách mỗi trang thành một PDF"),
-                    _ when item.Format == "ZIP" && _files.Count > 1 => L($"Compress {_files.Count} files into one ZIP", $"Nén {_files.Count} file thành một ZIP"),
-                    _ => L($"Convert to {item.Title}", $"Chuyển sang {item.Title}"),
+                    "MORE" => side == Side.Edit ? L("See all edits", "Xem tất cả thao tác") : L("See all formats", "Xem tất cả định dạng"),
+                    _ => Converter.Caption(item.Format, _files.Count),
                 };
             }
-            if (side == Side.Clipboard) return L("Drop here to copy", "Thả vào đây để copy");
-            return ConvertItems.Count == 0 ? L("This file type can't be converted yet", "Loại file này chưa đổi được") : L("Move outward to pick a format", "Rê ra ngoài để chọn định dạng");
+            return side switch
+            {
+                Side.Clipboard => L("Drop here to copy", "Thả vào đây để copy"),
+                Side.Convert => Items(side).Count == 0 ? L("This file type can't be converted yet", "Loại file này chưa đổi được") : L("Move outward to pick a format", "Rê ra ngoài để chọn định dạng"),
+                _ => Items(side).Count == 0 ? L("Nothing to edit for this file yet", "Loại file này chưa có thao tác sửa") : L("Move outward to pick an edit", "Rê ra ngoài để chọn thao tác"),
+            };
         }
         if (_files.Count == 0) return L("Drag a file onto the menu", "Kéo file vào menu");
         return _files.Count == 1 ? System.IO.Path.GetFileName(_files[0]) : L($"{_files.Count} files", $"{_files.Count} file");
@@ -425,7 +445,9 @@ public class RadialMenuWindow : Window
         double r = Math.Sqrt(dx * dx + dy * dy);
         double angle = Math.Atan2(dy, dx) * 180 / Math.PI;
         if (angle < 0) angle += 360;
-        var side = angle >= 90 && angle < 270 ? Side.Clipboard : Side.Convert;
+        var side = angle >= 90 && angle < 270 ? Side.Clipboard : RightSide(angle);
+        // Vòng ngoài nửa phải thuộc về nhóm đang mở (Chuyển đổi hoặc Chỉnh sửa), dù chuột ở trên hay dưới
+        var outerSide = side == Side.Clipboard ? Side.Clipboard : _expanded is Side.Convert or Side.Edit ? _expanded.Value : side;
 
         Side? newSide = null;
         int? newItem = null;
@@ -445,29 +467,30 @@ public class RadialMenuWindow : Window
             if (Items(side).Count > 0) newExpanded = side;
             if (side == Side.Clipboard) newShowAll = false;
         }
-        else if (r >= OuterFrom - 3 && r <= OuterTo + 26 && _showAll && _expanded == Side.Convert)
+        else if (r >= OuterFrom - 3 && r <= OuterTo + 26 && _showAll && _expanded is Side open and not Side.Clipboard)
         {
-            // Cả vòng tròn đang là định dạng chuyển đổi
-            newSide = Side.Convert;
-            double span = 360.0 / ConvertItems.Count;
-            newItem = Math.Min((int)(((angle - 270 + 360) % 360) / span), ConvertItems.Count - 1);
+            // Cả vòng tròn đang là lựa chọn của nhóm đang mở
+            newSide = open;
+            double span = 360.0 / Items(open).Count;
+            newItem = Math.Min((int)(((angle - 270 + 360) % 360) / span), Items(open).Count - 1);
         }
-        else if (r >= OuterFrom - 3 && r <= OuterTo + 26 && Items(side).Count > 0)
+        else if (r >= OuterFrom - 3 && r <= OuterTo + 26 && Items(outerSide).Count > 0)
         {
-            newExpanded = side;
-            newSide = side;
-            double span = 180.0 / Items(side).Count;
-            double raw = side == Side.Convert ? ((angle < 90 ? angle + 360 : angle) - 270) / span : (270 - angle) / span;
-            newItem = Math.Clamp((int)raw, 0, Items(side).Count - 1);
+            newExpanded = outerSide;
+            newSide = outerSide;
+            double span = 180.0 / Items(outerSide).Count;
+            double raw = outerSide != Side.Clipboard ? ((angle < 90 ? angle + 360 : angle) - 270) / span : (270 - angle) / span;
+            newItem = Math.Clamp((int)raw, 0, Items(outerSide).Count - 1);
         }
 
         // Rê vào ô "Thêm" -> bung cả vòng tròn
-        if (newSide == Side.Convert && newItem is int mi && mi < Items(Side.Convert).Count && Items(Side.Convert)[mi].Action == "MORE")
+        if (newSide is Side ms && ms != Side.Clipboard && newItem is int mi && mi < Items(ms).Count && Items(ms)[mi].Action == "MORE")
         {
             newShowAll = true;
             newItem = null;
         }
 
+        if (newExpanded != _expanded) newShowAll = false;   // đổi nhóm thì thu vòng tròn lại
         bool layoutChanged = newExpanded != _expanded || newShowAll != _showAll;
         bool hoverChanged = newSide != _hoverSide || newItem != _hoverItem;
         _expanded = newExpanded;

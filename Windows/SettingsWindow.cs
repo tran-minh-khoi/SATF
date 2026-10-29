@@ -84,6 +84,16 @@ public class SettingsWindow : Window
             _hotKeyError,
             Note(L("While dragging: opens the menu. Otherwise: shows or hides the shelf.", "Đang kéo file: mở menu. Không kéo file: mở hoặc đóng khay."))));
 
+        // Ảnh: mức nén, dung lượng mục tiêu, cỡ khi thu nhỏ
+        var levels = new[] { CompressLevel.Light, CompressLevel.Balanced, CompressLevel.Strong };
+        var sizes = AppSettings.TargetSizeChoices;
+        var edges = AppSettings.ResizeEdgeChoices;
+        root.Children.Add(Section(L("Images", "Ảnh"),
+            Row(L("Compress", "Nén ảnh"), Combo(levels.Select(AppSettings.LevelLabel).ToArray(), (int)_s.CompressLevel, i => _s.CompressLevel = levels[i])),
+            Row(L("Shrink to fit", "Ép dung lượng"), Combo(sizes.Select(k => L("Under ", "Dưới ") + AppSettings.SizeLabel(k)).ToArray(), Math.Max(0, Array.IndexOf(sizes, _s.TargetSizeKB)), i => _s.TargetSizeKB = sizes[i])),
+            Row(L("Resize to", "Thu nhỏ còn"), Combo(edges.Select(e => L($"{e}px long side", $"cạnh dài {e}px")).ToArray(), Math.Max(0, Array.IndexOf(edges, _s.ResizeEdge)), i => _s.ResizeEdge = edges[i])),
+            Note(L("Edited images are saved as new files. The originals are never changed.", "Ảnh sau khi sửa được lưu thành file mới, ảnh gốc giữ nguyên."))));
+
         // Tệp nén: chọn app giải nén / nén (hoặc mặc định)
         var tools = Archivers.Installed;
         var extractIds = new System.Collections.Generic.List<string>();
