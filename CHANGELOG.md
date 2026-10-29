@@ -2,7 +2,7 @@
 
 All notable changes to SATF are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
-## [1.2.0] — Unreleased
+## [1.2.0] — 2026-10-29
 
 ### Added
 - **Edit** in the radial menu: the right half is now split into **Convert** (top, orange) and **Edit** (bottom, green).
