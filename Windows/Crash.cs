@@ -44,4 +44,16 @@ public static class AppInfo
 
     public static string Version =>
         System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
+    /// true khi chạy từ bản Microsoft Store (gói MSIX): Store lo việc gỡ cài đặt, còn "Mở cùng Windows" dùng StartupTask
+    public static readonly bool IsPackaged = CheckPackaged();
+
+    private static bool CheckPackaged()
+    {
+        int length = 0;
+        return GetCurrentPackageFullName(ref length, null) != 15700; // 15700 = APPMODEL_ERROR_NO_PACKAGE
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int GetCurrentPackageFullName(ref int length, char[]? name);
 }

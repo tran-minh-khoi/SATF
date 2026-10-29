@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gói MSIX cho Microsoft Store. Workflow .github/workflows/msix.yml thay các giá trị __...__
+     bằng thông tin trong Partner Center (Product identity) rồi đóng gói. -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap desktop rescap">
+
+  <Identity Name="__IDENTITY_NAME__" Publisher="__PUBLISHER__" Version="__VERSION__.0" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>SATF</DisplayName>
+    <PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+    <Resource Language="vi-vn" />
+  </Resources>
+
+  <Applications>
+    <Application Id="SATF" Executable="SATF.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="SATF"
+        Description="Drag a file, give it a little shake, and convert it in a blink."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <!-- "Mở cùng Windows" của bản Store (thay cho Run key). TaskId khớp với Settings.cs -->
+        <desktop:Extension Category="windows.startupTask" Executable="SATF.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="SATFStartup" Enabled="true" DisplayName="SATF" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

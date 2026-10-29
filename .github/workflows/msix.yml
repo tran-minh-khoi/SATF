@@ -1,0 +1,71 @@
+# Đóng gói SATF thành MSIX để nộp lên Microsoft Store (Store tự ký số, không cần mua chứng chỉ).
+# Chạy tay: tab Actions → "MSIX (Microsoft Store)" → Run workflow. Kết quả nằm ở mục Artifacts.
+#
+# Thông tin gói lấy từ Partner Center → Product management → Product identity, đặt trong
+# Settings → Secrets and variables → Actions → Variables:
+#   MSIX_IDENTITY_NAME           (Package/Identity/Name)
+#   MSIX_PUBLISHER               (Package/Identity/Publisher, dạng CN=...)
+#   MSIX_PUBLISHER_DISPLAY_NAME  (Package/Properties/PublisherDisplayName)
+# Chưa đặt thì dùng giá trị thử, chỉ để cài thử trên máy, không nộp Store được.
+name: MSIX (Microsoft Store)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [Windows/**, build-win.sh, .github/workflows/msix.yml]
+
+jobs:
+  # SATF.exe build trên macOS bằng đúng build-win.sh (icon tạo bằng sips)
+  exe:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: NO_INSTALLER=1 ./build-win.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: satf-exe
+          path: build/windows/SATF.exe
+
+  # makeappx chỉ có trong Windows SDK
+  msix:
+    needs: exe
+    runs-on: windows-latest
+    env:
+      IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME || 'TranMinhKhoi.SATF' }}
+      PUBLISHER: ${{ vars.MSIX_PUBLISHER || 'CN=TranMinhKhoi' }}
+      PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME || 'Tran Minh Khoi' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: satf-exe
+          path: layout
+      - name: Pack
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          Copy-Item Windows/Package/Assets layout/Assets -Recurse
+          Copy-Item LICENSE layout/LICENSE.txt
+          Copy-Item THIRD_PARTY_NOTICES.md layout/
+          (Get-Content Windows/Package/AppxManifest.xml -Raw) `
+            -replace '__IDENTITY_NAME__', $env:IDENTITY_NAME `
+            -replace '__PUBLISHER_DISPLAY_NAME__', $env:PUBLISHER_DISPLAY_NAME `
+            -replace '__PUBLISHER__', $env:PUBLISHER `
+            -replace '__VERSION__', $version |
+            Set-Content layout/AppxManifest.xml -Encoding utf8
+          $makeappx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\makeappx.exe" |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          & $makeappx.FullName pack /d layout /p "SATF-$version.msix" /o
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: satf-msix
+          path: SATF-*.msix
+      # Thư mục đã giải nén, để cài thử bằng Add-AppxPackage -Register (cần bật Developer Mode)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: satf-msix-layout
+          path: layout

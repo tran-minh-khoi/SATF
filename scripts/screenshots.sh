@@ -17,5 +17,13 @@ for f in "Report Q3.docx" "Budget 2026.xlsx" "Pitch deck.pptx" "Holiday.zip"; do
 cp scripts/screenshots.swift "$TMP/main.swift"   # Swift chỉ chạy code trực tiếp trong main.swift
 xcrun swiftc -sdk "$(xcrun --sdk macosx --show-sdk-path)" \
   $(ls Sources/*.swift | grep -v main.swift) "$TMP/main.swift" -o "$TMP/shots" 2>/dev/null
-"$TMP/shots" docs/images "$TMP/samples" dark
-echo "✓ Đã cập nhật docs/images"
+if [ "${1:-}" = "store" ]; then
+  # Ảnh cho trang Microsoft Store (PNG): build/store/images
+  mkdir -p build/store/images
+  "$TMP/shots" build/store/images "$TMP/samples" dark store
+  sips -z 300 300 assets/logo.png --out build/store/images/store-tile-300.png >/dev/null
+  echo "✓ Đã tạo ảnh Store trong build/store/images"
+else
+  "$TMP/shots" docs/images "$TMP/samples" dark
+  echo "✓ Đã cập nhật docs/images"
+fi

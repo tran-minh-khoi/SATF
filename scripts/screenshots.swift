@@ -9,6 +9,9 @@ let out = URL(fileURLWithPath: CommandLine.arguments[1])
 let samples = URL(fileURLWithPath: CommandLine.arguments[2])
 func sample(_ n: String) -> URL { samples.appendingPathComponent(n) }
 
+/// Tham số thứ 4 = "store": tạo ảnh cho trang Microsoft Store thay vì ảnh README
+let storeMode = CommandLine.arguments.count > 4 && CommandLine.arguments[4] == "store"
+
 func snap<V: View>(_ name: String, _ view: V, size: CGSize, then: @escaping () -> Void) {
     let host = NSHostingView(rootView: view)
     host.frame = NSRect(origin: .zero, size: size)
@@ -21,7 +24,9 @@ func snap<V: View>(_ name: String, _ view: V, size: CGSize, then: @escaping () -
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
         let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds)!
         host.cacheDisplay(in: host.bounds, to: rep)
-        try! rep.representation(using: .jpeg, properties: [.compressionFactor: 0.82])!.write(to: out.appendingPathComponent(name + ".jpg"))
+        // Ảnh cho Microsoft Store phải là PNG; ảnh README dùng JPG cho nhẹ
+        if storeMode { try! rep.representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent(name + ".png")) }
+        else { try! rep.representation(using: .jpeg, properties: [.compressionFactor: 0.82])!.write(to: out.appendingPathComponent(name + ".jpg")) }
         w.orderOut(nil)
         then()
     }
@@ -85,7 +90,36 @@ func onBackdrop<V: View>(_ v: V) -> some View {
     Backdrop(content: v.shadow(color: .black.opacity(0.3), radius: 24, y: 10).padding(40))
 }
 
-let steps: [(@escaping () -> Void) -> Void] = [
+/// Ảnh chụp màn hình 1920x1080 cho Store: tiêu đề bên trái, giao diện bên phải
+struct StoreShot<C: View>: View {
+    let title: String
+    let subtitle: String
+    let content: C
+    var body: some View {
+        Backdrop(content: HStack(spacing: 60) {
+            VStack(alignment: .leading, spacing: 20) {
+                Text(title).font(.system(size: 64, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                Text(subtitle).font(.system(size: 28, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.9))
+            }
+            .frame(width: 760, alignment: .leading)
+            content.shadow(color: .black.opacity(0.3), radius: 24, y: 10)
+        }.padding(80))
+    }
+}
+
+func radial(_ m: RadialModel) -> some View { RadialMenuView(model: m).frame(width: 440, height: 480).scaleEffect(1.7).frame(width: 760, height: 820) }
+
+let storeSteps: [(@escaping () -> Void) -> Void] = [
+    { n in snap("store-1-convert", StoreShot(title: "Drag. Shake. Convert.", subtitle: "Shake a file while dragging it. A menu pops up right under your cursor: drop it on a format and the new file appears next to the original.", content: radial(m1)), size: CGSize(width: 1920, height: 1080), then: n) },
+    { n in snap("store-2-edit", StoreShot(title: "Quick image edits", subtitle: "Squeeze a photo under 1 MB, compress, resize, rotate, or remove location and camera info. The original is never changed.", content: radial(m4)), size: CGSize(width: 1920, height: 1080), then: n) },
+    { n in snap("store-3-merge", StoreShot(title: "Merge into one PDF", subtitle: "Hold several images, PDFs or Office files and merge them into one PDF, or stack images into one tall picture.", content: radial(m5)), size: CGSize(width: 1920, height: 1080), then: n) },
+    { n in snap("store-4-shelf", StoreShot(title: "Shelf", subtitle: "Collect files from different folders, select several and drag them out together.", content: ShelfView(model: ShelfController.shared.model, onClose: {}).fixedSize().scaleEffect(1.6).frame(width: 760, height: 820)), size: CGSize(width: 1920, height: 1080), then: n) },
+    // Logo cho Store: 1:1 (box art) và 9:16 (poster), logo trên nền gradient
+    { n in snap("store-box-1080", Backdrop(content: Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 820, height: 820).shadow(color: .black.opacity(0.25), radius: 30, y: 10)), size: CGSize(width: 1080, height: 1080), then: n) },
+    { n in snap("store-poster-720x1080", Backdrop(content: Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 600, height: 600).shadow(color: .black.opacity(0.25), radius: 24, y: 8)), size: CGSize(width: 720, height: 1080), then: n) },
+]
+
+let readmeSteps: [(@escaping () -> Void) -> Void] = [
     { n in snap("hero", Hero(model: m4), size: CGSize(width: 1280, height: 640), then: n) },
     { n in snap("radial-convert", onBackdrop(RadialMenuView(model: m1).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
     { n in snap("radial-all-formats", onBackdrop(RadialMenuView(model: m2).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
@@ -96,6 +130,7 @@ let steps: [(@escaping () -> Void) -> Void] = [
     { n in snap("shelf", onBackdrop(ShelfView(model: ShelfController.shared.model, onClose: {}).fixedSize()), size: CGSize(width: 420, height: 440), then: n) },
     { n in snap("settings", onBackdrop(SettingsView().frame(width: 460, height: 1100).background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))).frame(width: 540), size: CGSize(width: 540, height: 1180), then: n) },
 ]
+let steps = storeMode ? storeSteps : readmeSteps
 func run(_ i: Int) { if i < steps.count { let step = steps[i]; step({ run(i + 1) }) } else { exit(0) } }
 DispatchQueue.main.async { run(0) }
 app.run()
