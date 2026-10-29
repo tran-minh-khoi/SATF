@@ -75,12 +75,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        // Logo app thu nhỏ cho vừa thanh menu
-        let logo = NSApp.applicationIconImage ?? NSImage()
-        let icon = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
-            logo.draw(in: rect)
-            return true
-        }
+        // Icon đơn sắc (template): macOS tự đổi màu theo menu bar sáng/tối như mọi icon khác.
+        // Logo màu thu về 18px chỉ còn một đốm đỏ.
+        let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
+        let icon = (NSImage(systemSymbolName: "cat.fill", accessibilityDescription: "SATF")   // macOS 14+
+            ?? NSImage(systemSymbolName: "arrow.triangle.2.circlepath.doc.on.clipboard", accessibilityDescription: "SATF"))?
+            .withSymbolConfiguration(config)
+        icon?.isTemplate = true
         statusItem.button?.image = icon
         statusItem.button?.toolTip = "SATF"
 
@@ -89,8 +90,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
-        let header = menu.addItem(withTitle: "SATF", action: nil, keyEquivalent: "")
-        header.isEnabled = false
+        // Bấm vào tên app ở đầu menu = mở cửa sổ ủng hộ
+        let header = menu.addItem(withTitle: "SATF", action: #selector(openDonate), keyEquivalent: "")
+        header.target = self
+        header.attributedTitle = NSAttributedString(string: "SATF", attributes: [.font: NSFont.boldSystemFont(ofSize: 13)])
+        header.image = NSImage(systemSymbolName: "heart.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(paletteColors: [NSColor(Theme.donate)]))
+        header.toolTip = L("Support SATF", "Ủng hộ SATF")
         menu.addItem(.separator())
 
         add(menu, L("Open Shelf", "Mở khay"), "tray", #selector(toggleShelf))
@@ -100,6 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         add(menu, L("Report a Bug…", "Báo lỗi…"), "ladybug", #selector(reportBug))
         add(menu, L("Suggest a Feature…", "Góp ý tính năng…"), "lightbulb", #selector(suggestFeature))
         menu.addItem(.separator())
+        add(menu, L("Support SATF…", "Ủng hộ SATF…"), "heart", #selector(openDonate))
         add(menu, L("About SATF", "Giới thiệu SATF"), "info.circle", #selector(openAbout))
         add(menu, L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), "trash", #selector(uninstall))
         add(menu, L("Quit SATF", "Thoát"), "power", #selector(quit), key: "q")
@@ -147,6 +154,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Toast.show(L("No mail app found", "Chưa có app mail"),
                    L("Email address copied: contact@tranminhkhoi.dev", "Đã copy địa chỉ: contact@tranminhkhoi.dev"))
     }
+
+    @objc private func openDonate() { DonateWindowController.shared.show() }
 
     @objc private func openAbout() {
         let credits = NSMutableAttributedString(string: L("Drag, shake, convert. In a blink.\n\nMade by Tran Minh Khoi\n", "Kéo, lắc, đổi file trong nháy mắt.\n\nPhát triển bởi Tran Minh Khoi\n"),

@@ -70,6 +70,26 @@ enum Sensitivity: String, CaseIterable, Identifiable {
     }
 }
 
+/// Mức nén ảnh của nút "Nén ảnh"
+enum CompressLevel: String, CaseIterable, Identifiable {
+    case light, balanced, strong
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .light: return L("Light (best quality)", "Nhẹ (giữ nét nhất)")
+        case .balanced: return L("Balanced", "Cân bằng")
+        case .strong: return L("Strong (smallest)", "Mạnh (nhẹ nhất)")
+        }
+    }
+    var quality: Double {
+        switch self {
+        case .light: return 0.8
+        case .balanced: return 0.65
+        case .strong: return 0.45
+        }
+    }
+}
+
 struct HotKey: Equatable {
     var keyCode: UInt32
     var carbonModifiers: UInt32
@@ -119,6 +139,21 @@ final class Settings: ObservableObject {
             HotKeyManager.shared.reload()
         }
     }
+    // Sửa ảnh
+    @Published var compressLevel: CompressLevel {
+        didSet { defaults.set(compressLevel.rawValue, forKey: "compressLevel") }
+    }
+    /// Dung lượng tối đa của nút "Dưới … MB", tính bằng KB
+    @Published var targetSizeKB: Int {
+        didSet { defaults.set(targetSizeKB, forKey: "targetSizeKB") }
+    }
+    /// Cạnh dài tối đa của nút "Thu nhỏ", tính bằng pixel
+    @Published var resizeEdge: Int {
+        didSet { defaults.set(resizeEdge, forKey: "resizeEdge") }
+    }
+    static let targetSizeChoices = [200, 500, 1000, 2000, 5000]
+    static let resizeEdgeChoices = [1080, 1280, 1920, 2560, 3840]
+
     /// Thông báo khi phím tắt không đăng ký được (trùng app khác)
     @Published var hotKeyError: String?
 
@@ -138,6 +173,9 @@ final class Settings: ObservableObject {
 
         sensitivity = Sensitivity(rawValue: defaults.string(forKey: "sensitivity") ?? "") ?? .normal
         hotKeyEnabled = defaults.object(forKey: "hotKeyEnabled") as? Bool ?? true
+        compressLevel = CompressLevel(rawValue: defaults.string(forKey: "compressLevel") ?? "") ?? .balanced
+        targetSizeKB = defaults.object(forKey: "targetSizeKB") as? Int ?? 1000
+        resizeEdge = defaults.object(forKey: "resizeEdge") as? Int ?? 1920
 
         if let display = defaults.string(forKey: "hotKeyDisplay") {
             hotKey = HotKey(keyCode: UInt32(defaults.integer(forKey: "hotKeyCode")),
@@ -147,4 +185,9 @@ final class Settings: ObservableObject {
             hotKey = .default
         }
     }
+}
+
+/// 500 -> "500 KB", 1000 -> "1 MB"
+func sizeLabel(_ kb: Int) -> String {
+    kb >= 1000 ? "\(kb / 1000) MB" : "\(kb) KB"
 }

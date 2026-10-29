@@ -101,6 +101,24 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker(L("Compress", "Nén ảnh"), selection: $settings.compressLevel) {
+                    ForEach(CompressLevel.allCases) { Text($0.label).tag($0) }
+                }
+                Picker(L("Shrink to fit", "Ép dung lượng"), selection: $settings.targetSizeKB) {
+                    ForEach(Settings.targetSizeChoices, id: \.self) { Text(L("Under ", "Dưới ") + sizeLabel($0)).tag($0) }
+                }
+                Picker(L("Resize to", "Thu nhỏ còn"), selection: $settings.resizeEdge) {
+                    ForEach(Settings.resizeEdgeChoices, id: \.self) { Text(L("\($0)px long side", "cạnh dài \($0)px")).tag($0) }
+                }
+                Text(L("Edited images are saved as new files. The originals are never changed.",
+                       "Ảnh sau khi sửa được lưu thành file mới, ảnh gốc giữ nguyên."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text(L("Images", "Ảnh"))
+            }
+
+            Section {
                 Picker(L("Extract with", "Giải nén bằng"), selection: $settings.extractor) {
                     Text(L("Ask me", "Hỏi mỗi lần")).tag("")
                     Text(L("SATF (built-in)", "SATF (có sẵn)")).tag(Archivers.builtin)
