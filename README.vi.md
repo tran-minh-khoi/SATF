@@ -14,7 +14,7 @@
   <a href="LICENSE"><img alt="Giấy phép MIT" src="https://img.shields.io/badge/license-MIT-555?style=for-the-badge"></a>
 </p>
 
-<p align="center"><a href="README.md">English</a></p>
+<p align="center"><a href="https://mktechvn.com/vi/satf"><b>Trang web</b></a> · <a href="README.md">English</a></p>
 
 ---
 
@@ -134,4 +134,4 @@ SATF miễn phí và mã nguồn mở. Nếu app giúp bạn tiết kiệm thờ
 
 ## Tác giả
 
-**Tran Minh Khoi** · [tranminhkhoi.dev](https://tranminhkhoi.dev) · [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev)
+**Tran Minh Khoi** · [mktechvn.com/satf](https://mktechvn.com/vi/satf) · [tranminhkhoi.dev](https://tranminhkhoi.dev) · [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev)
