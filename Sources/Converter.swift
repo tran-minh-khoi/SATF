@@ -7,11 +7,38 @@ import UniformTypeIdentifiers
 
 enum Format: String, CaseIterable, Identifiable {
     case png, jpg, webp, heic, gif, tiff, bmp, avif, ico, pdf, txt, rtf, docx, odt, html, csv, mp4, mov, m4a, wav, aiff, zip
-    case extract   // giải nén
+    case extract    // giải nén
+    case mergePDF   // nhiều file -> một PDF
+    case splitPDF   // một PDF -> mỗi trang một PDF
 
     var id: String { rawValue }
-    var ext: String { rawValue }
-    var label: String { self == .extract ? L("Extract", "Giải nén") : rawValue.uppercased() }
+
+    var ext: String {
+        switch self {
+        case .mergePDF, .splitPDF: return "pdf"
+        default: return rawValue
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .extract: return L("Extract", "Giải nén")
+        case .mergePDF: return L("Merge PDF", "Gộp PDF")
+        case .splitPDF: return L("Split PDF", "Tách PDF")
+        default: return rawValue.uppercased()
+        }
+    }
+
+    /// Dòng thông báo khi đang làm lâu
+    var progressTitle: String {
+        switch self {
+        case .extract: return L("Extracting…", "Đang giải nén…")
+        case .zip: return L("Compressing…", "Đang nén…")
+        case .mergePDF: return L("Merging into one PDF…", "Đang gộp thành một PDF…")
+        case .splitPDF: return L("Splitting PDF…", "Đang tách PDF…")
+        default: return L("Converting to \(label)…", "Đang chuyển sang \(label)…")
+        }
+    }
 
     var imageType: UTType? {
         switch self {
@@ -78,7 +105,7 @@ enum Converter {
         case .image:
             all = [.jpg, .png, .pdf, .webp, .heic, .gif, .tiff, .bmp, .avif, .ico]
                 .filter { $0 == .pdf || $0 == .webp || writableImageTypes.contains($0.imageType?.identifier ?? "") }
-        case .pdf:          all = [.jpg, .png, .txt]
+        case .pdf:          all = [.jpg, .png, .splitPDF, .txt]
         case .document:     all = [.pdf, .docx, .txt, .rtf, .html, .odt]
         case .spreadsheet:  all = [.pdf, .csv]
         case .presentation: all = [.pdf, .png, .jpg]
@@ -89,18 +116,27 @@ enum Converter {
         }
         all.append(.zip)
         let own = normalizedExt(url)
-        return all.filter { $0.ext != own }
+        return all.filter { $0.rawValue != own }
     }
 
-    /// Nhiều file: chỉ hiện các định dạng mà file nào cũng đổi được.
+    /// Loại file đổi được sang PDF, nên gộp chung được vào một PDF
+    private static let pdfKinds: Set<FileKind> = [.image, .pdf, .document, .spreadsheet, .presentation]
+
+    /// Nhiều file:
+    /// - "Gộp PDF" đứng đầu nếu file nào cũng đổi được sang PDF (PDF, Word, Excel, PowerPoint, ảnh, văn bản)
+    /// - các định dạng mà file nào cũng đổi được (mỗi file ra một file mới)
+    /// - ZIP luôn ở cuối: nén tất cả vào một file, kể cả khi có thư mục hay file nén
     static func targets(for urls: [URL]) -> [Format] {
         guard let first = urls.first else { return [] }
-        var result = targets(for: first)
+        if urls.count == 1 { return targets(for: first) }
+
+        var common = targets(for: first).filter { $0 != .zip }
         for url in urls.dropFirst() {
             let t = Set(targets(for: url))
-            result = result.filter { t.contains($0) }
+            common = common.filter { t.contains($0) }
         }
-        return result
+        let canMerge = urls.allSatisfy { pdfKinds.contains(kind(of: $0)) }
+        return (canMerge ? [.mergePDF] : []) + common + [.zip]
     }
 
     // MARK: - Chạy chuyển đổi
@@ -109,7 +145,14 @@ enum Converter {
         let work = {
             do {
                 var output: [URL] = []
-                for file in files { output += try convert(file, to: format) }
+                switch format {
+                case .mergePDF:
+                    output = [try mergePDF(files)]
+                case .zip where files.count > 1:
+                    output = [try zip(files)]   // nhiều file -> một file ZIP
+                default:
+                    for file in files { output += try convert(file, to: format) }
+                }
                 DispatchQueue.main.async { completion(.success(output)) }
             } catch {
                 // Lỗi hệ thống thường khó hiểu -> đổi thành câu dễ hiểu
@@ -123,6 +166,8 @@ enum Converter {
     static func convert(_ src: URL, to format: Format) throws -> [URL] {
         if format == .zip { return [try zip(src)] }
         if format == .extract { return [try extract(src)] }
+        if format == .mergePDF { return [try mergePDF([src])] }
+        if format == .splitPDF { return try splitPDF(src) }
         switch kind(of: src) {
         case .image:          return [try convertImage(src, to: format)]
         case .pdf:            return try convertPDF(src, to: format)
@@ -320,6 +365,78 @@ enum Converter {
         return output
     }
 
+    // MARK: - Gộp / tách PDF
+
+    /// Gộp nhiều file thành một PDF, theo đúng thứ tự đang cầm. File không phải PDF được đổi sang PDF trước
+    /// (ảnh: mỗi ảnh một trang; Word, Excel, PowerPoint, văn bản: như khi đổi sang PDF).
+    private static func mergePDF(_ files: [URL]) throws -> URL {
+        let fm = FileManager.default
+        let tmp = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try fm.createDirectory(at: tmp, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: tmp) }
+
+        let merged = PDFDocument()
+        var sources: [PDFDocument] = []   // giữ các PDF nguồn tới khi ghi xong
+
+        for (i, file) in files.enumerated() {
+            let pdfURL: URL
+            switch kind(of: file) {
+            case .pdf:
+                pdfURL = file
+            case .image:
+                guard let image = NSImage(contentsOf: file), let page = PDFPage(image: image) else {
+                    throw ConvertError(L("Couldn't read the image \(file.lastPathComponent)", "Không đọc được ảnh \(file.lastPathComponent)"))
+                }
+                merged.insert(page, at: merged.pageCount)
+                continue
+            case .document:
+                pdfURL = tmp.appendingPathComponent("\(i).pdf")
+                _ = try onMain { try convertDocumentBuiltIn(file, to: .pdf, dst: pdfURL) }
+            case .spreadsheet, .presentation:
+                pdfURL = tmp.appendingPathComponent("\(i).pdf")
+                try officeExport(file, ext: "pdf", to: pdfURL)
+            default:
+                throw ConvertError(L("\(file.lastPathComponent) can't be added to a PDF", "Không gộp được \(file.lastPathComponent) vào PDF"))
+            }
+
+            guard let doc = PDFDocument(url: pdfURL) else {
+                throw ConvertError(L("Couldn't open \(file.lastPathComponent)", "Không mở được \(file.lastPathComponent)"))
+            }
+            if doc.isLocked {
+                throw ConvertError(L("\(file.lastPathComponent) is password-protected", "\(file.lastPathComponent) đang khoá mật khẩu"))
+            }
+            sources.append(doc)
+            for p in 0..<doc.pageCount {
+                guard let page = doc.page(at: p)?.copy() as? PDFPage else { continue }
+                merged.insert(page, at: merged.pageCount)
+            }
+        }
+
+        guard merged.pageCount > 0 else { throw ConvertError(L("Nothing to merge", "Không có trang nào để gộp")) }
+        let dst = destination(for: files[0], ext: "pdf", suffix: L(" (merged)", " (gộp)"))
+        let written = withExtendedLifetime(sources) { merged.write(to: dst) }
+        guard written else { throw ConvertError(L("Couldn't save the PDF", "Không ghi được file PDF")) }
+        return dst
+    }
+
+    /// Mỗi trang thành một file PDF riêng: ten-1.pdf, ten-2.pdf...
+    private static func splitPDF(_ src: URL) throws -> [URL] {
+        guard let doc = PDFDocument(url: src) else { throw ConvertError(L("Couldn't open this PDF", "Không mở được file PDF này")) }
+        if doc.isLocked { throw ConvertError(L("This PDF is password-protected", "File PDF đang khoá mật khẩu")) }
+        guard doc.pageCount > 1 else { throw ConvertError(L("This PDF has only one page", "File PDF này chỉ có một trang")) }
+
+        var output: [URL] = []
+        for i in 0..<doc.pageCount {
+            guard let page = doc.page(at: i)?.copy() as? PDFPage else { continue }
+            let single = PDFDocument()
+            single.insert(page, at: 0)
+            let dst = destination(for: src, ext: "pdf", suffix: "-\(i + 1)")
+            guard single.write(to: dst) else { throw ConvertError(L("Couldn't save the PDF", "Không ghi được file PDF")) }
+            output.append(dst)
+        }
+        return output
+    }
+
     // MARK: - Văn bản (Word, RTF, TXT, HTML...)
 
     private static func readDocument(_ url: URL) throws -> NSAttributedString {
@@ -511,6 +628,21 @@ enum Converter {
     private static func zip(_ src: URL) throws -> URL {
         let dst = destination(for: src, ext: "zip")
         try shell("/usr/bin/ditto", ["-c", "-k", "--sequesterRsrc", "--keepParent", src.path, dst.path])
+        return dst
+    }
+
+    /// Nén nhiều file / thư mục vào một file "Archive.zip" cạnh file đầu tiên.
+    private static func zip(_ files: [URL]) throws -> URL {
+        let fm = FileManager.default
+        // Gom vào một thư mục tạm rồi nén cả thư mục. Trên APFS, copy là bản sao nhanh, không tốn thêm dung lượng.
+        let stage = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try fm.createDirectory(at: stage, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: stage) }
+        for file in files {
+            try fm.copyItem(at: file, to: uniqueURL(in: stage, name: file.lastPathComponent))
+        }
+        let dst = uniqueURL(in: files[0].deletingLastPathComponent(), name: L("Archive", "Lưu trữ") + ".zip")
+        try shell("/usr/bin/ditto", ["-c", "-k", "--sequesterRsrc", stage.path, dst.path])
         return dst
     }
 

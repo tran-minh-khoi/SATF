@@ -2,6 +2,17 @@
 
 All notable changes to SATF are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [1.1.0] — 2026-10-29
+
+### Added
+- **Merge into one PDF** when you hold several files: PDFs, Word, Excel, PowerPoint, images and text, in the order you picked them.
+- **Split PDF**: one PDF per page.
+- **One ZIP for several files**: holding several files and choosing ZIP now makes a single archive (`Archive.zip`) instead of one ZIP per file.
+
+### Fixed
+- Holding several files of different kinds (for example a ZIP and a photo) left only Copy and Shelf in the menu. ZIP is now always there.
+- macOS: zipping or extracting an Excel/PowerPoint file no longer asks for the Office add-on.
+
 ## [1.0.0] — 2026-10-28
 
 First public release for macOS and Windows.

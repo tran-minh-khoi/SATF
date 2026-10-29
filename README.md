@@ -39,6 +39,7 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 - 🎯 **Radial menu right at your cursor:** Convert on the right, Copy and Shelf on the left.
 - 🔄 **Convert images, PDFs, documents, video and audio:** the most-used formats come first, the rest are one hover away.
+- 📚 **Several files at once:** merge them into **one PDF** (PDFs, Word, Excel, PowerPoint, images, text, in the order you picked them), or compress them into **one ZIP**. A multi-page PDF can also be **split** into one PDF per page.
 - 📦 **Extract archives:** zip, rar, 7z, tar, gz, bz2, xz. Works with The Unarchiver, Keka, 7-Zip, WinRAR and others if you prefer them.
 - 🗂️ **Shelf:** a floating tray to collect files from different places, then drag them out together, copy them, or share them.
 - 🪶 **Lightweight by default:** heavy add-ons (LibreOffice, FFmpeg) download only when you need them, and you can remove them anytime.
@@ -50,8 +51,8 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 | Platform | Download | Requirements |
 |---|---|---|
-| **macOS** | [SATF-1.0.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
-| **Windows** | [SATF-Setup-1.0.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
+| **macOS** | [SATF-1.1.0.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
+| **Windows** | [SATF-Setup-1.1.0.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
 
 All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/releases).
 
@@ -107,7 +108,7 @@ New files are saved next to the original, and the original is never changed.
 | You drag… | macOS | Windows |
 |---|---|---|
 | **Images:** PNG, JPG, HEIC, WebP, GIF, TIFF, BMP, SVG… | JPG, PNG, PDF, WebP, HEIC, GIF, TIFF, BMP, AVIF, ICO | JPG, PNG, PDF, WebP, GIF, TIFF, BMP |
-| **PDF** | JPG, PNG (one per page), TXT | JPG, PNG (one per page), DOCX ¹ |
+| **PDF** | JPG, PNG (one per page), TXT, Split (one PDF per page) | JPG, PNG (one per page), DOCX ¹, Split (one PDF per page) |
 | **Word:** DOCX, DOC, ODT, RTF | PDF, DOCX, TXT, RTF, HTML, ODT | PDF, DOCX, TXT, RTF, HTML, ODT ¹ |
 | **Excel:** XLSX, XLS, ODS | PDF, CSV ¹ | PDF, XLSX, CSV ¹ |
 | **PowerPoint:** PPTX, PPT, ODP | PDF, PNG, JPG ¹ | PDF, PNG, JPG, PPTX ¹ |
@@ -116,9 +117,12 @@ New files are saved next to the original, and the original is never changed.
 | **Audio:** MP3, WAV, M4A… | M4A, WAV, AIFF | MP3, M4A, WAV ² |
 | **Archives:** zip, rar, 7z, tar, gz, bz2, xz | Extract | Extract |
 | **Anything else, including folders** | ZIP | ZIP |
+| **Several files** (PDF, Word, Excel, PowerPoint, images, text) | Merge into one PDF ³ | Merge into one PDF ¹ ³ |
+| **Several files of any kind** | One ZIP with all of them | One ZIP with all of them |
 
 ¹ Uses Microsoft Office if you have it; otherwise the **Office add-on**.
 ² Needs the **Video & music add-on**.
+³ Pages follow the order you picked the files. Office files need the same apps or add-on as converting them to PDF.
 
 ## Add-ons
 

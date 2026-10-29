@@ -132,10 +132,9 @@ public class RadialMenuWindow : Window
     {
         _files.Clear();
         _files.AddRange(files.Where(File.Exists));
-        // Nhiều file: chỉ hiện định dạng mà file nào cũng đổi được
-        var formats = _files.Count == 0 ? new List<string>() : Converter.GetTargetFormats(_files[0]);
-        foreach (var f in _files.Skip(1)) formats = formats.Intersect(Converter.GetTargetFormats(f)).ToList();
-        _allConvert = formats.Select((f, i) => new Item(i, f == "EXTRACT" ? L("Extract", "Giải nén") : f, GlyphFor(f), "CONVERT", f)).ToList();
+        // Nhiều file: Gộp PDF, các định dạng file nào cũng đổi được, và ZIP (nén chung một file)
+        var formats = Converter.GetTargetFormats(_files);
+        _allConvert = formats.Select((f, i) => new Item(i, Converter.Label(f), GlyphFor(f), "CONVERT", f)).ToList();
         _showAll = false;
         Rebuild();
     }
@@ -147,6 +146,8 @@ public class RadialMenuWindow : Window
         "MP3" or "M4A" or "WAV" => "",
         "ZIP" => "",
         "EXTRACT" => "",
+        Converter.MergePdf => "\uE8F1",   // Library: chồng tài liệu
+        Converter.SplitPdf => "\uE8C6",   // Cut
         _ => "",
     };
 
@@ -310,6 +311,9 @@ public class RadialMenuWindow : Window
                     "SHELF" => L("Keep on the shelf for later", "Cất vào khay để dùng sau"),
                     "MORE" => L("See all formats", "Xem tất cả định dạng"),
                     _ when item.Format == "EXTRACT" => L("Extract here", "Giải nén tại đây"),
+                    _ when item.Format == Converter.MergePdf => L($"Merge {_files.Count} files into one PDF", $"Gộp {_files.Count} file thành một PDF"),
+                    _ when item.Format == Converter.SplitPdf => L("One PDF per page", "Tách mỗi trang thành một PDF"),
+                    _ when item.Format == "ZIP" && _files.Count > 1 => L($"Compress {_files.Count} files into one ZIP", $"Nén {_files.Count} file thành một ZIP"),
                     _ => L($"Convert to {item.Title}", $"Chuyển sang {item.Title}"),
                 };
             }
@@ -569,8 +573,7 @@ public static class Conversion
         {
             slow.Stop();
             onSlow?.Invoke();
-            ToastWindow.Show(format == "EXTRACT" ? L("Extracting…", "Đang giải nén…") : L($"Converting to {format}…", $"Đang chuyển sang {format}…"),
-                             what, ToastWindow.Style.Working, seconds: null);
+            ToastWindow.Show(Converter.ProgressTitle(format), what, ToastWindow.Style.Working, seconds: null);
         };
         slow.Start();
 
@@ -578,7 +581,7 @@ public static class Conversion
         {
             var created = new List<string>();
             Exception? error = null;
-            try { foreach (var f in files) created.AddRange(Converter.ConvertFile(f, format, tool)); }
+            try { created.AddRange(Converter.ConvertAll(files, format, tool)); }
             catch (Exception ex) { error = ex; Crash.Log(ex); }
 
             dispatcher.BeginInvoke(() =>

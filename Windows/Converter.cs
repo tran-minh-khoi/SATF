@@ -9,6 +9,8 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
 using SkiaSharp;
 
 namespace SATF;
@@ -34,6 +36,30 @@ public static class Converter
         [".tgz"] = Kind.Archive, [".bz2"] = Kind.Archive, [".tbz2"] = Kind.Archive, [".xz"] = Kind.Archive, [".txz"] = Kind.Archive,
     };
 
+    /// Nhiều file -> một PDF
+    public const string MergePdf = "MERGE_PDF";
+    /// Một PDF -> mỗi trang một PDF
+    public const string SplitPdf = "SPLIT_PDF";
+
+    /// Tên hiện trên menu
+    public static string Label(string fmt) => fmt switch
+    {
+        "EXTRACT" => L("Extract", "Giải nén"),
+        MergePdf => L("Merge PDF", "Gộp PDF"),
+        SplitPdf => L("Split PDF", "Tách PDF"),
+        _ => fmt,
+    };
+
+    /// Dòng thông báo khi đang làm lâu
+    public static string ProgressTitle(string fmt) => fmt switch
+    {
+        "EXTRACT" => L("Extracting…", "Đang giải nén…"),
+        "ZIP" => L("Compressing…", "Đang nén…"),
+        MergePdf => L("Merging into one PDF…", "Đang gộp thành một PDF…"),
+        SplitPdf => L("Splitting PDF…", "Đang tách PDF…"),
+        _ => L($"Converting to {fmt}…", $"Đang chuyển sang {fmt}…"),
+    };
+
     private static Kind KindOf(string path) =>
         Directory.Exists(path) ? Kind.Unknown : Kinds.GetValueOrDefault(Path.GetExtension(path), Kind.Unknown);
 
@@ -44,7 +70,7 @@ public static class Converter
         string[] list = KindOf(filePath) switch
         {
             Kind.Image => ["JPG", "PNG", "PDF", "WEBP", "GIF", "TIFF", "BMP"],
-            Kind.Pdf => ["JPG", "PNG", "DOCX"],
+            Kind.Pdf => ["JPG", "PNG", SplitPdf, "DOCX"],
             Kind.Word => ["PDF", "DOCX", "TXT", "RTF", "HTML", "ODT"],
             Kind.Excel => ["PDF", "XLSX", "CSV"],
             Kind.PowerPoint => ["PDF", "PNG", "JPG", "PPTX"],
@@ -58,6 +84,26 @@ public static class Converter
             "JPEG" => "JPG", "TIF" => "TIFF", "HTM" => "HTML", var e => e,
         };
         return list.Where(f => f != own).Append("ZIP").ToList();
+    }
+
+    /// Nhiều file:
+    /// - "Gộp PDF" đứng đầu nếu file nào cũng đổi được sang PDF (PDF, Word, Excel, PowerPoint, ảnh, văn bản)
+    /// - các định dạng mà file nào cũng đổi được (mỗi file ra một file mới)
+    /// - ZIP luôn ở cuối: nén tất cả vào một file, kể cả khi có file nén
+    public static List<string> GetTargetFormats(IReadOnlyList<string> files)
+    {
+        if (files.Count == 0) return [];
+        if (files.Count == 1) return GetTargetFormats(files[0]);
+
+        var common = GetTargetFormats(files[0]).Where(f => f != "ZIP").ToList();
+        foreach (var f in files.Skip(1)) common = common.Intersect(GetTargetFormats(f)).ToList();
+
+        var result = new List<string>();
+        if (files.All(f => KindOf(f) is Kind.Image or Kind.Pdf or Kind.Word or Kind.Excel or Kind.PowerPoint or Kind.Text))
+            result.Add(MergePdf);
+        result.AddRange(common);
+        result.Add("ZIP");
+        return result;
     }
 
     /// File mới nằm cạnh file gốc; trùng tên thì thêm " (1)", " (2)"...
@@ -75,8 +121,13 @@ public static class Converter
     public static AddOn? RequiredAddOn(string src, string fmt)
     {
         fmt = fmt.ToUpperInvariant();
-        if (fmt == "ZIP") return null;
+        if (fmt is "ZIP" or SplitPdf) return null;
         var kind = KindOf(src);
+        if (fmt == MergePdf)
+        {
+            if (kind is Kind.Pdf or Kind.Image) return null;   // gộp thẳng, không cần đổi
+            fmt = "PDF";
+        }
         switch (kind)
         {
             case Kind.Image:
@@ -92,6 +143,18 @@ public static class Converter
         return null;
     }
 
+    /// Chuyển cả nhóm file đang cầm. Gộp PDF và ZIP nhiều file cho ra một file; còn lại mỗi file ra file mới riêng.
+    /// Phải gọi trên thread STA (WPF imaging + Office COM).
+    public static List<string> ConvertAll(IReadOnlyList<string> files, string fmt, string? tool = null)
+    {
+        fmt = fmt.ToUpperInvariant();
+        if (fmt == MergePdf) return [MergeToPdf(files)];
+        if (fmt == "ZIP" && files.Count > 1) return [ZipMany(files, tool ?? AppSettings.Current.Compressor)];
+        var created = new List<string>();
+        foreach (var f in files) created.AddRange(ConvertFile(f, fmt, tool));
+        return created;
+    }
+
     /// Phải gọi trên thread STA (WPF imaging + Office COM).
     /// `tool`: app giải nén / nén ("builtin" hoặc id trong Archivers); null = theo Cài đặt
     public static List<string> ConvertFile(string src, string fmt, string? tool = null)
@@ -99,6 +162,8 @@ public static class Converter
         fmt = fmt.ToUpperInvariant();
         if (fmt == "ZIP") return [Zip(src, tool ?? AppSettings.Current.Compressor)];
         if (fmt == "EXTRACT") return [Extract(src, tool ?? AppSettings.Current.Extractor)];
+        if (fmt == MergePdf) return [MergeToPdf([src])];
+        if (fmt == SplitPdf) return SplitPdfPages(src);
 
         switch (KindOf(src))
         {
@@ -252,6 +317,65 @@ public static class Converter
         return output;
     }
 
+    // MARK: - Gộp / tách PDF
+
+    /// Gộp nhiều file thành một PDF, theo đúng thứ tự đang cầm. File không phải PDF được đổi sang PDF trước
+    /// (ảnh: mỗi ảnh một trang; Word, Excel, PowerPoint, văn bản: như khi đổi sang PDF).
+    private static string MergeToPdf(IReadOnlyList<string> files)
+    {
+        var tmp = Directory.CreateTempSubdirectory("satf").FullName;
+        try
+        {
+            using var merged = new PdfDocument();
+            for (int i = 0; i < files.Count; i++)
+            {
+                var src = files[i];
+                var pdf = Path.Combine(tmp, $"{i}.pdf");
+                switch (KindOf(src))
+                {
+                    case Kind.Pdf: pdf = src; break;
+                    case Kind.Image: ImageToPdf(Decode(src), pdf); break;
+                    case Kind.Word or Kind.Excel or Kind.PowerPoint or Kind.Text: Office(src, pdf, "PDF"); break;
+                    default: throw new NotSupportedException(L($"{Path.GetFileName(src)} can't be added to a PDF", $"Không gộp được {Path.GetFileName(src)} vào PDF"));
+                }
+                using var input = OpenPdf(pdf, Path.GetFileName(src));
+                foreach (var page in input.Pages) merged.AddPage(page);
+            }
+            if (merged.PageCount == 0) throw new InvalidOperationException(L("Nothing to merge", "Không có trang nào để gộp"));
+            var dst = Destination(files[0], "PDF", L(" (merged)", " (gộp)"));
+            merged.Save(dst);
+            return dst;
+        }
+        finally { try { Directory.Delete(tmp, true); } catch { } }
+    }
+
+    /// Mỗi trang thành một file PDF riêng: ten-1.pdf, ten-2.pdf...
+    private static List<string> SplitPdfPages(string src)
+    {
+        using var input = OpenPdf(src, Path.GetFileName(src));
+        if (input.PageCount < 2) throw new InvalidOperationException(L("This PDF has only one page", "File PDF này chỉ có một trang"));
+        var output = new List<string>();
+        for (int i = 0; i < input.PageCount; i++)
+        {
+            using var single = new PdfDocument();
+            single.AddPage(input.Pages[i]);
+            var dst = Destination(src, "PDF", $"-{i + 1}");
+            single.Save(dst);
+            output.Add(dst);
+        }
+        return output;
+    }
+
+    private static PdfDocument OpenPdf(string path, string name)
+    {
+        try { return PdfReader.Open(path, PdfDocumentOpenMode.Import); }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            throw new InvalidOperationException(L($"Couldn't open {name}. It may be password-protected or damaged.",
+                                                  $"Không mở được {name}, có thể file đang khoá mật khẩu hoặc bị hỏng."), ex);
+        }
+    }
+
     // MARK: - Văn bản thuần
 
     private static void ConvertText(string src, string dst, string fmt)
@@ -357,7 +481,7 @@ public static class Converter
         var dst = Destination(src, "ZIP");
         if (Archivers.Find(tool) is ArchiveTool app)
         {
-            Run(app.Exe, Archivers.CompressArgs(app, src, dst), 600_000);
+            Run(app.Exe, Archivers.CompressArgs(app, [src], dst), 600_000);
             if (!File.Exists(dst)) throw new InvalidOperationException(L($"{app.Name} couldn't compress this file", $"{app.Name} chưa nén được file này"));
             return dst;
         }
@@ -369,6 +493,47 @@ public static class Converter
         {
             using var zip = ZipFile.Open(dst, ZipArchiveMode.Create);
             zip.CreateEntryFromFile(src, Path.GetFileName(src));
+        }
+        return dst;
+    }
+
+    /// Nén nhiều file / thư mục vào một file "Archive.zip" cạnh file đầu tiên.
+    private static string ZipMany(IReadOnlyList<string> files, string tool)
+    {
+        var dst = UniquePath(Path.GetDirectoryName(files[0]) ?? "", L("Archive", "Lưu trữ") + ".zip");
+        if (Archivers.Find(tool) is ArchiveTool app)
+        {
+            Run(app.Exe, Archivers.CompressArgs(app, files, dst), 600_000);
+            if (!File.Exists(dst)) throw new InvalidOperationException(L($"{app.Name} couldn't compress these files", $"{app.Name} chưa nén được các file này"));
+            return dst;
+        }
+        try
+        {
+            using var zip = ZipFile.Open(dst, ZipArchiveMode.Create);
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var src in files)
+            {
+                // Hai file trùng tên (từ hai thư mục khác nhau): thêm " (1)"
+                var name = Path.GetFileName(src);
+                var stem = Path.GetFileNameWithoutExtension(name);
+                var ext = Path.GetExtension(name);
+                for (int n = 1; !used.Add(name); n++) name = $"{stem} ({n}){ext}";
+
+                if (Directory.Exists(src))
+                {
+                    foreach (var file in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
+                        zip.CreateEntryFromFile(file, name + "/" + Path.GetRelativePath(src, file).Replace('\\', '/'), CompressionLevel.Optimal);
+                }
+                else
+                {
+                    zip.CreateEntryFromFile(src, name, CompressionLevel.Optimal);
+                }
+            }
+        }
+        catch
+        {
+            try { File.Delete(dst); } catch { }   // không để lại file nén dở
+            throw;
         }
         return dst;
     }

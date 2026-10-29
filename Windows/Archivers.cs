@@ -48,12 +48,17 @@ public static class Archivers
         _ => $"x -o:\"{dst}\" -y \"{src}\"",   // Bandizip
     };
 
-    public static string CompressArgs(ArchiveTool t, string src, string dst) => t.Id switch
+    /// Nén một hoặc nhiều file vào cùng một file `dst`
+    public static string CompressArgs(ArchiveTool t, IEnumerable<string> srcs, string dst)
     {
-        "7zip" => $"a -tzip \"{dst}\" \"{src}\"",
-        "winrar" => $"a -afzip -ibck -ep1 \"{dst}\" \"{src}\"",
-        _ => $"c \"{dst}\" \"{src}\"",   // Bandizip
-    };
+        var src = string.Join(" ", srcs.Select(s => $"\"{s}\""));
+        return t.Id switch
+        {
+            "7zip" => $"a -tzip \"{dst}\" {src}",
+            "winrar" => $"a -afzip -ibck -ep1 \"{dst}\" {src}",
+            _ => $"c \"{dst}\" {src}",   // Bandizip
+        };
+    }
 }
 
 /// Lần đầu giải nén mà máy có app khác: hỏi dùng app nào, chỉ lần này hay luôn dùng.
