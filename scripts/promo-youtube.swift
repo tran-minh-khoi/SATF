@@ -223,6 +223,26 @@ func beatPulse(_ t: Double) -> Double {
     return exp(-(t - DROP).truncatingRemainder(dividingBy: 0.5) * 7)
 }
 
+/// Một hạt sáng bay chậm lên trên
+struct Particle: View {
+    let i: Int, t: Double, pulse: Double
+    var body: some View {
+        let seed: Double = Double(i) * 12.9898
+        let speed: Double = 18 + (sin(seed) + 1) * 14
+        let span: Double = Double(LH) + 40
+        let travel: Double = t * speed + (cos(seed) + 1) * 300
+        let y: Double = Double(LH) + 20 - travel.truncatingRemainder(dividingBy: span)
+        let across: Double = (sin(seed * 3.7) + 1) / 2
+        let x: Double = across * Double(LW) + sin(t * 0.9 + seed) * 14
+        let base: Double = 0.12 + 0.09 * (sin(seed * 5.1) + 1)
+        let alpha: Double = base + 0.15 * pulse
+        let d = CGFloat(3 + (i % 4) * 2)
+        return Circle().fill(Color.white.opacity(alpha))
+            .frame(width: d, height: d)
+            .position(x: CGFloat(x), y: CGFloat(y))
+    }
+}
+
 struct Backdrop: View {
     let t: Double
     var body: some View {
@@ -239,22 +259,15 @@ struct Backdrop: View {
                 .position(x: CGFloat(800 + sin(t * 0.8) * 70), y: CGFloat(430 + cos(t * 0.7) * 50))
             // Vệt sáng chéo trôi ngang
             ForEach(0..<3, id: \.self) { i in
-                let x = (t * 60 + Double(i) * 420).truncatingRemainder(dividingBy: 1500) - 300
+                let travel: Double = t * 60 + Double(i) * 420
+                let x: Double = travel.truncatingRemainder(dividingBy: 1500) - 300
                 LinearGradient(colors: [.clear, .white.opacity(0.07), .clear], startPoint: .leading, endPoint: .trailing)
                     .frame(width: 140, height: 1100)
                     .rotationEffect(.degrees(24))
                     .position(x: CGFloat(x), y: LH / 2)
             }
             // Hạt sáng bay lên
-            ForEach(0..<26, id: \.self) { i in
-                let seed = Double(i) * 12.9898
-                let speed = 18 + (sin(seed) + 1) * 14
-                let y = Double(LH) + 20 - (t * speed + (cos(seed) + 1) * 300).truncatingRemainder(dividingBy: Double(LH) + 40)
-                let x = (sin(seed * 3.7) + 1) / 2 * Double(LW) + sin(t * 0.9 + seed) * 14
-                Circle().fill(.white.opacity(0.12 + 0.18 * (sin(seed * 5.1) + 1) / 2 + 0.15 * pulse))
-                    .frame(width: CGFloat(3 + (i % 4) * 2), height: CGFloat(3 + (i % 4) * 2))
-                    .position(x: CGFloat(x), y: CGFloat(y))
-            }
+            ForEach(0..<26, id: \.self) { i in Particle(i: i, t: t, pulse: pulse) }
             Color.white.opacity(0.045 * pulse)
         }
         .frame(width: LW, height: LH)
@@ -467,10 +480,11 @@ struct ShockRings: View {
     var body: some View {
         ZStack {
             ForEach(0..<3, id: \.self) { i in
-                let start = at + Double(i) * 0.12
-                let x = prog(t, start, 0.9)
+                let start: Double = at + Double(i) * 0.12
+                let x: Double = prog(t, start, 0.9)
                 let d = CGFloat(40 + 900 * easeOut(x))
-                Circle().strokeBorder(.white.opacity(0.7 * (1 - x)), lineWidth: CGFloat(10 * (1 - x) + 1))
+                let line = CGFloat(10 * (1 - x) + 1)
+                Circle().strokeBorder(Color.white.opacity(0.7 * (1 - x)), lineWidth: line)
                     .frame(width: d, height: d)
                     .opacity(t >= start && x < 1 ? 1 : 0)
             }
@@ -488,14 +502,16 @@ struct Confetti: View {
         let fade = 1 - prog(t, at + 1.4, 0.8)
         ZStack {
             ForEach(0..<44, id: \.self) { i in
-                let seed = Double(i) * 7.31
-                let ang = Double(i) / 44 * 2 * .pi + sin(seed) * 0.3
-                let v = 260 + (sin(seed * 1.7) + 1) * 170
-                let x = cos(ang) * v * dt
-                let y = sin(ang) * v * dt * 0.75 + 260 * dt * dt
+                let seed: Double = Double(i) * 7.31
+                let ang: Double = Double(i) / 44 * 2 * .pi + sin(seed) * 0.3
+                let v: Double = 260 + (sin(seed * 1.7) + 1) * 170
+                let x: Double = cos(ang) * v * dt
+                let y: Double = sin(ang) * v * dt * 0.75 + 260 * dt * dt
+                let spin: Double = dt * (200 + seed * 13)
+                let w = CGFloat(8 + (i % 3) * 3), h = CGFloat(14 - (i % 3) * 3)
                 RoundedRectangle(cornerRadius: 2).fill(Confetti.colors[i % 5])
-                    .frame(width: CGFloat(8 + (i % 3) * 3), height: CGFloat(14 - (i % 3) * 3))
-                    .rotationEffect(.degrees(dt * (200 + seed * 13)))
+                    .frame(width: w, height: h)
+                    .rotationEffect(.degrees(spin))
                     .offset(x: CGFloat(x), y: CGFloat(y))
                     .opacity(dt > 0 && dt < 2.2 ? fade : 0)
             }
@@ -848,12 +864,13 @@ struct SceneView: View {
             // Kêu gọi tặng sao, sao bắn tung toé
             ZStack {
                 ForEach(0..<16, id: \.self) { i in
-                    let a = Double(i) / 16 * 2 * .pi + 0.3
-                    let x = easeOut(prog(t, cta + 0.05, 1.1))
+                    let a: Double = Double(i) / 16 * 2 * .pi + 0.3
+                    let x: Double = easeOut(prog(t, cta + 0.05, 1.1))
+                    let ox = CGFloat(cos(a) * (60 + 220 * x)), oy = CGFloat(sin(a) * (20 + 70 * x))
                     Image(systemName: "star.fill").font(.system(size: CGFloat(10 + (i % 3) * 5)))
                         .foregroundStyle(gold)
                         .rotationEffect(.degrees(x * 180))
-                        .offset(x: CGFloat(cos(a) * (60 + 220 * x)), y: CGFloat(sin(a) * (20 + 70 * x)))
+                        .offset(x: ox, y: oy)
                         .opacity(t > cta ? 1 - prog(t, cta + 0.6, 0.6) : 0)
                 }
                 HStack(spacing: 10) {
@@ -1036,6 +1053,12 @@ func sfx(_ at: Double, _ e: Sfx) {
 
 // Nhạc cụ thêm cho bản YouTube
 func saw(_ cycles: Double) -> Double { 2 * (cycles - floor(cycles)) - 1 }
+/// Tổng các nốt sine (nền hợp âm)
+func chordSine(_ notes: [Int], _ t: Double) -> Double {
+    var sum = 0.0
+    for n in notes { sum += sin(2 * .pi * midi(n) * t) }
+    return sum
+}
 
 func snare(_ at: Double, _ g: Double = 0.3) {
     var hp = OnePole()
@@ -1069,8 +1092,11 @@ func supersaw(_ at: Double, _ dur: Double, _ notes: [Int], gain: Double, cutoff:
             let offset = Double(n) * 0.137 + d
             var lp = OnePole(), lp2 = OnePole()
             render(at, dur, gain: gain, pan: pan) { t, _ in
-                var env = min(1, t / 0.01) * min(1, (dur - t) / 0.05) * exp(-t * decay)
-                if duck { env *= 1 - 0.8 * exp(-(at + t - DROP).truncatingRemainder(dividingBy: 0.5) * 9) }
+                var env: Double = min(1, t / 0.01) * min(1, (dur - t) / 0.05) * exp(-t * decay)
+                if duck {
+                    let phase: Double = (at + t - DROP).truncatingRemainder(dividingBy: 0.5)
+                    env *= 1 - 0.8 * exp(-phase * 9)
+                }
                 return lp2.low(lp.low(saw(f * t + offset), cutoff), cutoff) * env
             }
         }
@@ -1085,7 +1111,7 @@ func synthesize() {
     let grooveTo = S7 + 2.5
 
     // 1. Câu mở đầu: nền trầm Am, mỗi chữ một tiếng rền, gió cuộn lên
-    render(0, H0, gain: 0.05) { t, _ in [45, 57, 64].reduce(0.0) { $0 + sin(2 * .pi * midi($1) * t) } * min(1, t / 0.3) }
+    render(0, H0, gain: 0.05) { t, _ in chordSine([45, 57, 64], t) * min(1, t / 0.3) }
     for at in hookTimes + [slowAt] { boom(at, at == slowAt ? 0.9 : 0.6); kick(at, 0.7) }
 
     // 2. Cách cũ: trống nhẹ, bass tối, như đang chờ đợi
@@ -1097,7 +1123,7 @@ func synthesize() {
         bass(t, 0.4, midi(33))
         b += 1
     }
-    render(H0, S1 - H0, gain: 0.045) { t, _ in [45, 57, 60, 64].reduce(0.0) { $0 + sin(2 * .pi * midi($1) * t) } }
+    render(H0, S1 - H0, gain: 0.045) { t, _ in chordSine([45, 57, 60, 64], t) }
 
     // 3. "There's a faster way": trống dồn + gió cuộn, ngắt một nhịp rồi drop
     var roll = S1, step = 0.25
@@ -1107,9 +1133,11 @@ func synthesize() {
         if roll > S1 + 0.5 { step = 0.125 }
         if roll > S1 + 0.75 { step = 0.0625 }
     }
-    render(S1 - 0.5, DROP - S1 + 0.5, gain: 0.3) { t, _ in
-        let x = t / (DROP - S1 + 0.5)
-        return noise() * x * x * (1 - prog(t, DROP - S1 + 0.4, 0.1))
+    let riseLen: Double = DROP - S1 + 0.5
+    render(S1 - 0.5, riseLen, gain: 0.3) { t, _ in
+        let x: Double = t / riseLen
+        let cutOff: Double = 1 - prog(t, riseLen - 0.1, 0.1)
+        return noise() * x * x * cutOff
     }
     supersaw(S1, DROP - S1, [57, 60, 64], gain: 0.02, cutoff: 800, decay: 0)
 
