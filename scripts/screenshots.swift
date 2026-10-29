@@ -36,8 +36,17 @@ m2.expanded = .convert; m2.showAll = true; m2.hoveredSide = .convert; m2.hovered
 // Menu tròn: rê vào Copy
 let m3 = RadialModel(files: [sample("Report Q3.docx"), sample("Vacation photo.png")])
 m3.hoveredSide = .clipboard; m3.hoveredItem = 0
+// Menu tròn: nửa Chỉnh sửa của ảnh JPG, rê vào "< 1 MB"
+let m4 = RadialModel(files: [sample("Beach day.jpg")])
+m4.expanded = .edit; m4.hoveredSide = .edit
+m4.hoveredItem = m4.editItems.firstIndex { $0.target == .convert(.shrink) }
+// Menu tròn: nhiều file, Chỉnh sửa -> Gộp PDF
+let m5 = RadialModel(files: [sample("Beach day.jpg"), sample("Vacation photo.png"), sample("Screenshot.png")])
+m5.expanded = .edit; m5.hoveredSide = .edit; m5.hoveredItem = 0
 
-ShelfController.shared.model.add([sample("Vacation photo.png"), sample("Report Q3.docx"), sample("Budget 2026.xlsx"), sample("Pitch deck.pptx"), sample("Holiday.zip")])
+let shelfFiles = [sample("Vacation photo.png"), sample("Beach day.jpg"), sample("Report Q3.docx"), sample("Budget 2026.xlsx"), sample("Pitch deck.pptx"), sample("Holiday.zip")]
+ShelfController.shared.model.add(shelfFiles)
+ShelfController.shared.model.selection = [shelfFiles[0], shelfFiles[1]]   // đang chọn 2 file để kéo cùng lúc
 
 // Nền gradient cùng tông logo
 struct Backdrop<C: View>: View {
@@ -60,7 +69,7 @@ struct Hero: View {
                 Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 230, height: 230)
                     .shadow(color: .black.opacity(0.25), radius: 20, y: 8)
                 Text("Drag. Shake. Convert.").font(.system(size: 46, weight: .heavy, design: .rounded)).foregroundStyle(.white)
-                Text("A tiny menu that pops up right where you drag a file.\nConvert, extract, copy or shelve it in one move.")
+                Text("A tiny menu that pops up right where you drag a file.\nConvert, edit, copy or shelve it in one move.")
                     .font(.system(size: 21, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.88))
                 Text("macOS · Windows · Free & open source").font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white).padding(.horizontal, 14).padding(.vertical, 7)
@@ -77,12 +86,15 @@ func onBackdrop<V: View>(_ v: V) -> some View {
 }
 
 let steps: [(@escaping () -> Void) -> Void] = [
-    { n in snap("hero", Hero(model: m1), size: CGSize(width: 1280, height: 640), then: n) },
+    { n in snap("hero", Hero(model: m4), size: CGSize(width: 1280, height: 640), then: n) },
     { n in snap("radial-convert", onBackdrop(RadialMenuView(model: m1).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
     { n in snap("radial-all-formats", onBackdrop(RadialMenuView(model: m2).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
     { n in snap("radial-copy", onBackdrop(RadialMenuView(model: m3).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
+    { n in snap("radial-edit", onBackdrop(RadialMenuView(model: m4).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
+    { n in snap("radial-merge", onBackdrop(RadialMenuView(model: m5).frame(width: 440, height: 480)), size: CGSize(width: 560, height: 560), then: n) },
+    { n in snap("donate", onBackdrop(DonateView().background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))), size: CGSize(width: 440, height: 680), then: n) },
     { n in snap("shelf", onBackdrop(ShelfView(model: ShelfController.shared.model, onClose: {}).fixedSize()), size: CGSize(width: 420, height: 440), then: n) },
-    { n in snap("settings", onBackdrop(SettingsView().frame(height: 1000).background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))).frame(width: 540), size: CGSize(width: 540, height: 1080), then: n) },
+    { n in snap("settings", onBackdrop(SettingsView().frame(width: 460, height: 1100).background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))).frame(width: 540), size: CGSize(width: 540, height: 1180), then: n) },
 ]
 func run(_ i: Int) { if i < steps.count { let step = steps[i]; step({ run(i + 1) }) } else { exit(0) } }
 DispatchQueue.main.async { run(0) }

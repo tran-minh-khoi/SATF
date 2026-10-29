@@ -88,14 +88,23 @@ All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/r
   </tr>
   <tr>
     <td align="center"><b>Copy</b> (bottom) or <b>Shelf</b> (top).</td>
-    <td align="center"><b>Shelf:</b> collect files, drag them out later.</td>
+    <td align="center"><b>Shelf:</b> select several files and drag them out together.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/radial-edit.jpg" alt="Edit half of the radial menu"></td>
+    <td width="50%"><img src="docs/images/radial-merge.jpg" alt="Editing several images at once"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Edit:</b> rotate, resize, compress, squeeze under 1 MB, clean info.</td>
+    <td align="center"><b>Several files:</b> merge into one PDF or stack into one image.</td>
   </tr>
 </table>
 
 1. **Start dragging** any file or several files.
 2. **Shake** it left and right while holding <kbd>Shift</kbd>, or press the shortcut.
 3. **Drop** it on:
-   - **Convert →** a format. More than six choices? Hover **More** to open the full circle.
+   - **Convert →** (top right) a format. More than six choices? Hover **More** to open the full circle.
+   - **Edit →** (bottom right) an edit: rotate, resize, compress, under 1 MB, clean info, merge PDF, stack. The original is never changed.
    - **Copy** puts the file on the clipboard.
    - **Shelf** keeps it in a floating tray for later.
 4. Changed your mind? Press <kbd>Esc</kbd>, click outside, or just drop the file somewhere else.
@@ -151,7 +160,8 @@ Have another archive app? SATF supports **The Unarchiver, Keka, BetterZip, WinZi
 <p align="center"><img src="docs/images/settings.jpg" alt="SATF Settings" width="420"></p>
 
 - **Language:** English or Tiếng Việt.
-- **Shake:** turn it on or off, choose a key to hold (none, Shift, Option/Alt, Control, Command) and how firm the shake should be.
+- **Shake:** turn it on or off, choose a key to hold (none, Shift, Option/Alt, Control, Command) and how firm the shake should be (a 1–10 slider).
+- **Images:** compress level, the "under … MB" target (200 KB–5 MB) and the resize size (1080–3840px).
 - **Keyboard shortcut:** click and press a new combination.
 - **Archives:** which app extracts and which app makes ZIPs.
 - **Add-ons:** see, download or remove them.
@@ -239,7 +249,7 @@ Pull requests, translations and ideas are welcome. Please read [CONTRIBUTING.md]
 
 SATF is free and open source. If it saves you time, you can buy me a coffee. Scan the VietQR code below with any Vietnamese banking app, or open **Support SATF…** from the menu bar / tray menu. A ⭐ on GitHub helps a lot too.
 
-<p align="center"><img src="assets/donate-vietqr.png" alt="VietQR · MB Bank · Tran Minh Khoi" width="200"></p>
+<p align="center"><img src="docs/images/donate.jpg" alt="Support SATF window" width="300"></p>
 
 ## License
 

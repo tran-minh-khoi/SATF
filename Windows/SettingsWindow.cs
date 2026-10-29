@@ -33,7 +33,6 @@ public class SettingsWindow : Window
         Title = L("SATF Settings", "Cài đặt SATF");
         Width = 440;
         SizeToContent = SizeToContent.Height;
-        ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Icon = UI.AppIcon;
 
@@ -63,7 +62,15 @@ public class SettingsWindow : Window
         // Lắc chuột
         var shake = Check(L("Shake while dragging to open the menu", "Lắc file đang kéo để mở menu"), _s.ShakeEnabled, v => _s.ShakeEnabled = v);
         var modifier = Combo(new[] { L("None", "Không cần"), "Shift", "Ctrl", "Alt" }, (int)_s.ShakeModifier, i => _s.ShakeModifier = (ShakeModifier)i);
-        var sensitivity = Combo(new[] { L("Easy", "Nhạy"), L("Normal", "Vừa"), L("Firm", "Khó") }, (int)_s.Sensitivity, i => _s.Sensitivity = (Sensitivity)i);
+        // 10 mức: kéo sang trái = lắc nhẹ là mở, sang phải = phải lắc mạnh (đỡ mở nhầm)
+        var levelText = new TextBlock { Text = $"{_s.Level}/10", Foreground = Brushes.Gray, MinWidth = 34, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+        var slider = new Slider { Minimum = 1, Maximum = 10, Value = _s.Level, TickFrequency = 1, IsSnapToTickEnabled = true, TickPlacement = System.Windows.Controls.Primitives.TickPlacement.BottomRight, Width = 150, VerticalAlignment = VerticalAlignment.Center };
+        slider.ValueChanged += (s, e) => { _s.ShakeLevel = (int)slider.Value; levelText.Text = $"{_s.ShakeLevel}/10"; _s.Save(); };
+        var sensitivity = new StackPanel { Orientation = Orientation.Horizontal };
+        sensitivity.Children.Add(new TextBlock { Text = L("Light", "Nhẹ"), FontSize = 11, Foreground = Brushes.Gray, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
+        sensitivity.Children.Add(slider);
+        sensitivity.Children.Add(new TextBlock { Text = L("Firm", "Mạnh"), FontSize = 11, Foreground = Brushes.Gray, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0) });
+        sensitivity.Children.Add(levelText);
         root.Children.Add(Section(L("Shake", "Lắc chuột"),
             shake,
             Row(L("Hold key", "Giữ kèm phím"), modifier),
@@ -118,7 +125,12 @@ public class SettingsWindow : Window
         root.Children.Add(Section(L("General", "Hệ thống"),
             Check(L("Start with Windows", "Mở cùng Windows"), AppSettings.LaunchAtStartup, v => AppSettings.LaunchAtStartup = v)));
 
-        Content = root;
+        // Cuộn được và kéo đổi kích thước được: màn hình thấp vẫn xem hết các mục
+        MaxHeight = SystemParameters.WorkArea.Height - 40;
+        MinWidth = 400;
+        MinHeight = 320;
+        ResizeMode = ResizeMode.CanResize;
+        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         PreviewKeyDown += OnPreviewKeyDown;
         Closed += (s, e) => StopRecording();
         App.Instance.HotKeyFailed += ShowHotKeyError;

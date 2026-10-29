@@ -11,9 +11,12 @@ final class SettingsWindowController {
     func show() {
         if window == nil {
             let host = NSHostingView(rootView: SettingsView())
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 700),
-                             styleMask: [.titled, .closable],
+            // Kéo đổi kích thước được; không cao hơn màn hình (máy màn nhỏ vẫn cuộn xem hết)
+            let maxH = (NSScreen.main?.visibleFrame.height ?? 800) - 60
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: min(700, maxH)),
+                             styleMask: [.titled, .closable, .resizable],
                              backing: .buffered, defer: false)
+            w.contentMinSize = NSSize(width: 420, height: 360)
             w.title = L("SATF Settings", "Cài đặt SATF")
             w.contentView = host
             w.isReleasedWhenClosed = false
@@ -29,6 +32,8 @@ final class SettingsWindowController {
 struct SettingsView: View {
     @ObservedObject private var settings = Settings.shared
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    /// Chiều cao cửa sổ; ảnh chụp cho README dùng giá trị lớn hơn để thấy hết các mục
+    var height: CGFloat = 700
 
     var body: some View {
         Form {
@@ -68,12 +73,22 @@ struct SettingsView: View {
                 }
                 .disabled(!settings.shakeEnabled)
 
-                Picker(L("Sensitivity", "Độ nhạy"), selection: $settings.sensitivity) {
-                    ForEach(Sensitivity.allCases) { s in
-                        Text(s.label).tag(s)
+                // 10 mức: kéo sang trái = lắc nhẹ là mở, sang phải = phải lắc mạnh (đỡ mở nhầm)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(L("Sensitivity", "Độ nhạy"))
+                        Spacer()
+                        Text("\(settings.shakeLevel)/10").monospacedDigit().foregroundStyle(.secondary)
+                    }
+                    Slider(value: Binding(get: { Double(settings.shakeLevel) }, set: { settings.shakeLevel = Int($0.rounded()) }),
+                           in: Double(ShakeLevel.range.lowerBound)...Double(ShakeLevel.range.upperBound), step: 1) {
+                        EmptyView()
+                    } minimumValueLabel: {
+                        Text(L("Light", "Nhẹ")).font(.caption).foregroundStyle(.secondary)
+                    } maximumValueLabel: {
+                        Text(L("Firm", "Mạnh")).font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                .pickerStyle(.segmented)
                 .disabled(!settings.shakeEnabled)
             } header: {
                 Text(L("Shake", "Lắc chuột"))
@@ -159,7 +174,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 700)
+        .frame(minWidth: 420, idealWidth: 460, maxWidth: .infinity, minHeight: 360, idealHeight: height, maxHeight: .infinity)
     }
 }
 

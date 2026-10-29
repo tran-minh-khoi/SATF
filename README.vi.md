@@ -65,12 +65,17 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
     <td width="50%"><img src="docs/images/radial-copy.jpg" alt="Nửa copy"></td>
     <td width="50%"><img src="docs/images/shelf.jpg" alt="Khay"></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/radial-edit.jpg" alt="Nửa chỉnh sửa"></td>
+    <td width="50%"><img src="docs/images/radial-merge.jpg" alt="Sửa nhiều ảnh cùng lúc"></td>
+  </tr>
 </table>
 
 1. **Kéo** một hoặc nhiều file.
 2. **Giữ Shift và lắc nhẹ** qua lại, hoặc bấm phím tắt.
 3. **Thả** file vào:
-   - **Chuyển đổi →** định dạng. Nhiều hơn 6 lựa chọn thì rê vào **Thêm** để bung cả vòng.
+   - **Chuyển đổi →** (trên phải) định dạng. Nhiều hơn 6 lựa chọn thì rê vào **Thêm** để bung cả vòng.
+   - **Chỉnh sửa →** (dưới phải) thao tác: xoay, thu nhỏ, nén, ép dưới 1 MB, xoá EXIF, gộp PDF, ghép ảnh. File gốc luôn giữ nguyên.
    - **Copy** (ô dưới): copy file.
    - **Khay** (ô trên): cất vào khay để dùng sau.
 4. Đổi ý? Bấm <kbd>Esc</kbd>, bấm ra ngoài, hoặc thả file ra chỗ khác.
@@ -121,7 +126,7 @@ Chi tiết xem [README tiếng Anh](README.md#build-from-source) và [CONTRIBUTI
 
 SATF miễn phí và mã nguồn mở. Nếu app giúp bạn tiết kiệm thời gian, bạn có thể mời mình một ly cà phê: quét mã VietQR bên dưới bằng app ngân hàng bất kỳ, hoặc mở **Ủng hộ SATF…** trong menu của app. Tặng một ⭐ trên GitHub cũng là ủng hộ rất lớn.
 
-<p align="center"><img src="assets/donate-vietqr.png" alt="VietQR · MB Bank · Tran Minh Khoi" width="200"></p>
+<p align="center"><img src="docs/images/donate.jpg" alt="Cửa sổ Ủng hộ SATF" width="300"></p>
 
 ## Giấy phép
 

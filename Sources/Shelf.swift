@@ -217,6 +217,8 @@ struct ShelfView: View {
                 .foregroundStyle(Color.accentColor)
             Text(L("Shelf", "Khay"))
                 .font(.system(size: 13, weight: .semibold))
+                .lineLimit(1)
+                .fixedSize()   // không bị rớt dòng khi thanh tiêu đề chật
             if !model.files.isEmpty {
                 Text("\(model.files.count)")
                     .font(.system(size: 10, weight: .bold))

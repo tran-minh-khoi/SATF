@@ -15,6 +15,8 @@ All notable changes to SATF are listed here. Versions follow [Semantic Versionin
   - **Stack**: several images into one tall image.
 - **Rotate PDF** (all pages, 90°).
 - **Settings → Images**: compress level, target size and resize size.
+- **Shake sensitivity** is now a 1–10 slider instead of three choices. Your old choice carries over.
+- The **Settings** window can be resized and scrolls, so it fits small screens.
 - **Shelf**: click, Ctrl/⌘-click and Shift-click to select, Ctrl+A/⌘A to select all, Delete to remove, Esc to deselect. Drag one selected file to take the whole selection, or use the drag handle to take everything. Double-click opens a file, right-click shows Open / Show in Finder or Explorer / Remove.
 - **Support SATF** window with a VietQR code, opened from the name at the top of the menu bar / tray menu.
 

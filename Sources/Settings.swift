@@ -38,36 +38,14 @@ enum ModifierChoice: String, CaseIterable, Identifiable {
     }
 }
 
-enum Sensitivity: String, CaseIterable, Identifiable {
-    case easy, normal, hard
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .easy: return L("Easy", "Nhạy")
-        case .normal: return L("Normal", "Vừa")
-        case .hard: return L("Firm", "Khó")
-        }
-    }
-
-    /// Mỗi nhịp lắc phải đi xa tối thiểu (point)
-    var minSwing: CGFloat {
-        switch self {
-        case .easy: return 25
-        case .normal: return 35
-        case .hard: return 50
-        }
-    }
-
+/// Độ nhạy lắc: 1 = nhạy nhất (lắc nhẹ là mở menu), 10 = phải lắc mạnh. Cùng công thức với bản Windows.
+enum ShakeLevel {
+    static let range = 1...10
+    static let `default` = 5
+    /// Mỗi nhịp lắc phải đi xa tối thiểu (point): 20 … 56
+    static func minSwing(_ level: Int) -> CGFloat { CGFloat(20 + (level - 1) * 4) }
     /// Số lần đổi chiều cần có
-    var reversals: Int {
-        switch self {
-        case .easy: return 3
-        case .normal: return 4
-        case .hard: return 5
-        }
-    }
+    static func reversals(_ level: Int) -> Int { level <= 3 ? 3 : level <= 7 ? 4 : 5 }
 }
 
 /// Mức nén ảnh của nút "Nén ảnh"
@@ -122,8 +100,8 @@ final class Settings: ObservableObject {
     @Published var shakeModifier: ModifierChoice {
         didSet { defaults.set(shakeModifier.rawValue, forKey: "shakeModifier") }
     }
-    @Published var sensitivity: Sensitivity {
-        didSet { defaults.set(sensitivity.rawValue, forKey: "sensitivity") }
+    @Published var shakeLevel: Int {
+        didSet { defaults.set(shakeLevel, forKey: "shakeLevel") }
     }
     @Published var hotKeyEnabled: Bool {
         didSet {
@@ -171,7 +149,16 @@ final class Settings: ObservableObject {
             shakeModifier = .shift
         }
 
-        sensitivity = Sensitivity(rawValue: defaults.string(forKey: "sensitivity") ?? "") ?? .normal
+        if let level = defaults.object(forKey: "shakeLevel") as? Int {
+            shakeLevel = min(max(level, ShakeLevel.range.lowerBound), ShakeLevel.range.upperBound)
+        } else {
+            // Bản cũ chỉ có 3 mức Nhạy / Vừa / Khó
+            switch defaults.string(forKey: "sensitivity") {
+            case "easy": shakeLevel = 2
+            case "hard": shakeLevel = 8
+            default: shakeLevel = ShakeLevel.default
+            }
+        }
         hotKeyEnabled = defaults.object(forKey: "hotKeyEnabled") as? Bool ?? true
         compressLevel = CompressLevel(rawValue: defaults.string(forKey: "compressLevel") ?? "") ?? .balanced
         targetSizeKB = defaults.object(forKey: "targetSizeKB") as? Int ?? 1000

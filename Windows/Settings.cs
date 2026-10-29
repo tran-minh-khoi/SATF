@@ -27,7 +27,10 @@ public class AppSettings
     public string Compressor { get; set; } = Archivers.Builtin;
     public bool ShakeEnabled { get; set; } = true;
     public ShakeModifier ShakeModifier { get; set; } = ShakeModifier.Shift;
+    /// Chỉ còn để đọc cài đặt của bản cũ (3 mức). Bản mới dùng ShakeLevel.
     public Sensitivity Sensitivity { get; set; } = Sensitivity.Normal;
+    /// Độ nhạy lắc 1…10: 1 = nhạy nhất, 10 = phải lắc mạnh. 0 = chưa chọn (lấy từ Sensitivity cũ).
+    public int ShakeLevel { get; set; }
     public bool HotKeyEnabled { get; set; } = true;
     public uint HotKeyMods { get; set; } = NativeMethods.MOD_ALT | NativeMethods.MOD_SHIFT;
     public uint HotKeyVk { get; set; } = NativeMethods.VK_SPACE;
@@ -58,8 +61,10 @@ public class AppSettings
     private static string FilePath => Path.Combine(Tools.Dir, "settings.json");
 
     /// Mỗi nhịp lắc phải đi xa tối thiểu (pixel), và số lần đổi chiều cần có
-    public int MinSwing => Sensitivity switch { Sensitivity.Easy => 25, Sensitivity.Hard => 50, _ => 35 };
-    public int Reversals => Sensitivity switch { Sensitivity.Easy => 3, Sensitivity.Hard => 5, _ => 4 };
+    /// Cùng công thức với bản Mac
+    public int Level => ShakeLevel is >= 1 and <= 10 ? ShakeLevel : Sensitivity switch { Sensitivity.Easy => 2, Sensitivity.Hard => 8, _ => 5 };
+    public int MinSwing => 20 + (Level - 1) * 4;
+    public int Reversals => Level <= 3 ? 3 : Level <= 7 ? 4 : 5;
 
     public string ModifierLabel => ShakeModifier switch
     {
