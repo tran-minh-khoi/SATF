@@ -40,6 +40,9 @@ dotnet publish Windows/SATF.Windows.csproj \
   --self-contained \
   -o "$OUT" >/dev/null
 
+# NO_INSTALLER=1: chỉ cần SATF.exe (workflow test / MSIX)
+[ -n "${NO_INSTALLER:-}" ] && { echo "✓ Xong: $OUT/SATF.exe"; exit 0; }
+
 echo "▸ Tạo bộ cài…"
 command -v makensis >/dev/null || { echo "Thiếu makensis: brew install makensis"; exit 1; }
 SETUP="SATF-Setup-$VERSION.exe"

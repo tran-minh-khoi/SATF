@@ -53,7 +53,7 @@ final class ShakeDetector {
         guard !firedThisHold else { return }
 
         let settings = Settings.shared
-        let minSwing = settings.sensitivity.minSwing
+        let minSwing = ShakeLevel.minSwing(settings.shakeLevel)
         let x = NSEvent.mouseLocation.x
         let now = ProcessInfo.processInfo.systemUptime
         let dx = x - extremeX
@@ -76,7 +76,7 @@ final class ShakeDetector {
             reversals.append(now)
             reversals.removeAll { now - $0 > window }
 
-            if reversals.count >= settings.sensitivity.reversals {
+            if reversals.count >= ShakeLevel.reversals(settings.shakeLevel) {
                 reversals.removeAll()
                 if let flag = settings.shakeModifier.flag, !NSEvent.modifierFlags.contains(flag) { return }
                 firedThisHold = true

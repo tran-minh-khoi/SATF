@@ -3,7 +3,8 @@ import SwiftUI
 
 // MARK: - Dữ liệu
 
-enum RadialSide { case clipboard, convert }
+/// Nửa trái: Copy (dưới) + Khay (trên). Nửa phải: Convert (trên) + Edit (dưới).
+enum RadialSide { case clipboard, convert, edit }
 
 enum RadialTarget: Equatable {
     case copy, openShelf, convert(Format), more
@@ -32,8 +33,24 @@ extension Format {
         case .extract: return "archivebox"
         case .mergePDF: return "square.stack.3d.up"
         case .splitPDF: return "scissors"
+        case .rotate: return "rotate.right"
+        case .resize: return "arrow.down.right.and.arrow.up.left"
+        case .compress: return "rectangle.compress.vertical"
+        case .shrink: return "scalemass"
+        case .stripMetadata: return "location.slash"
+        case .longImage: return "rectangle.split.1x2"
         }
     }
+
+    var isImageFormat: Bool { imageType != nil || self == .webp }
+}
+
+/// Màu của từng nửa, dùng chung cho menu tròn và thông báo
+enum Theme {
+    static let clipboard = Color(red: 0.22, green: 0.56, blue: 1.0)   // #388FFF
+    static let convert = Color(red: 1.0, green: 0.52, blue: 0.16)     // #FF8529
+    static let edit = Color(red: 0.20, green: 0.78, blue: 0.48)       // #34C77B
+    static let donate = Color(red: 0.91, green: 0.31, blue: 0.36)     // #E8505B
 }
 
 // MARK: - Hình học
@@ -47,9 +64,17 @@ enum RadialGeo {
     static let innerFrom: CGFloat = 52, innerTo: CGFloat = 118
     static let outerFrom: CGFloat = 124, outerTo: CGFloat = 194
 
+    /// Phần của vòng trong
     static func sideRange(_ side: RadialSide) -> (Double, Double) {
-        side == .convert ? (270, 450) : (90, 270)
+        switch side {
+        case .clipboard: return (90, 270)
+        case .convert: return (270, 360)
+        case .edit: return (360, 450)
+        }
     }
+
+    /// Nửa phải: trên là Convert, dưới là Edit
+    static func rightSide(_ angle: Double) -> RadialSide { angle >= 270 ? .convert : .edit }
 
     /// Ô thứ `index` trong nửa `side`, xếp từ trên xuống dưới. `full`: trải cả vòng tròn, bắt đầu từ đỉnh.
     static func itemRange(_ side: RadialSide, index: Int, count: Int, full: Bool = false) -> (Double, Double) {
@@ -60,7 +85,7 @@ enum RadialGeo {
         }
         let span = 180.0 / Double(count)
         switch side {
-        case .convert:
+        case .convert, .edit:   // vòng ngoài của cả hai trải hết nửa phải
             let start = 270 + Double(index) * span
             return (start, start + span)
         case .clipboard:
@@ -86,12 +111,13 @@ final class RadialModel: ObservableObject {
     let files: [URL]
     let clipboardItems: [RadialItem]
     let allConvertItems: [RadialItem]
+    let allEditItems: [RadialItem]
 
     /// Nửa vòng chứa tối đa bao nhiêu ô; nhiều hơn thì ô cuối là "Thêm".
     static let halfLimit = 6
 
     @Published var expanded: RadialSide? {
-        didSet { if expanded != .convert { showAll = false } }
+        didSet { if expanded != oldValue { showAll = false } }
     }
     /// Đang bung cả vòng tròn để xem hết định dạng
     @Published var showAll = false
@@ -105,20 +131,34 @@ final class RadialModel: ObservableObject {
             RadialItem(id: 0, title: "Copy", symbol: "doc.on.doc", target: .copy),
             RadialItem(id: 1, title: L("Shelf", "Khay"), symbol: "tray.and.arrow.down", target: .openShelf),
         ]
-        allConvertItems = Converter.targets(for: files).enumerated().map { index, format in
-            RadialItem(id: index, title: format.label, symbol: format.symbol, target: .convert(format))
+        let targets = Converter.targets(for: files)
+        // Đổi giữa các định dạng ảnh: tên định dạng đã đủ rõ, bỏ icon ảnh lặp lại
+        let allImages = files.allSatisfy { Converter.kind(of: $0) == .image }
+        func item(_ index: Int, _ format: Format) -> RadialItem {
+            RadialItem(id: index, title: format.label,
+                       symbol: allImages && format.isImageFormat ? "" : format.symbol,
+                       target: .convert(format))
         }
+        allConvertItems = targets.filter { !$0.isEdit }.enumerated().map(item)
+        allEditItems = targets.filter(\.isEdit).enumerated().map(item)
     }
 
-    var convertItems: [RadialItem] {
+    private func limited(_ all: [RadialItem], expanded side: RadialSide) -> [RadialItem] {
         let n = Self.halfLimit
-        if showAll || allConvertItems.count <= n { return allConvertItems }
-        return allConvertItems.prefix(n - 1)
-            + [RadialItem(id: n - 1, title: L("\(allConvertItems.count - n + 1) more", "Thêm \(allConvertItems.count - n + 1)"), symbol: "ellipsis.circle", target: .more)]
+        if (showAll && expanded == side) || all.count <= n { return all }
+        return all.prefix(n - 1)
+            + [RadialItem(id: n - 1, title: L("\(all.count - n + 1) more", "Thêm \(all.count - n + 1)"), symbol: "ellipsis.circle", target: .more)]
     }
+
+    var convertItems: [RadialItem] { limited(allConvertItems, expanded: .convert) }
+    var editItems: [RadialItem] { limited(allEditItems, expanded: .edit) }
 
     func items(_ side: RadialSide) -> [RadialItem] {
-        side == .clipboard ? clipboardItems : convertItems
+        switch side {
+        case .clipboard: return clipboardItems
+        case .convert: return convertItems
+        case .edit: return editItems
+        }
     }
 
     /// Hành động sẽ chạy nếu thả / bấm ở vị trí hiện tại
@@ -145,13 +185,22 @@ final class RadialModel: ObservableObject {
                 case .convert(.extract): return L("Extract here", "Giải nén tại đây")
                 case .convert(.mergePDF): return L("Merge \(files.count) files into one PDF", "Gộp \(files.count) file thành một PDF")
                 case .convert(.splitPDF): return L("One PDF per page", "Tách mỗi trang thành một PDF")
+                case .convert(.rotate): return L("Rotate 90° · saves a copy", "Xoay 90° · lưu thành bản mới")
+                case .convert(.resize): return L("Resize to \(Settings.shared.resizeEdge)px on the long side", "Thu nhỏ còn cạnh dài \(Settings.shared.resizeEdge)px")
+                case .convert(.compress): return L("Make it smaller · \(Settings.shared.compressLevel.label)", "Giảm dung lượng · \(Settings.shared.compressLevel.label)")
+                case .convert(.shrink): return L("Make it under \(sizeLabel(Settings.shared.targetSizeKB))", "Ép xuống dưới \(sizeLabel(Settings.shared.targetSizeKB))")
+                case .convert(.stripMetadata): return L("Remove location & camera info", "Xoá vị trí & thông tin máy chụp")
+                case .convert(.longImage): return L("Stack \(files.count) images into one tall image", "Ghép \(files.count) ảnh thành một ảnh dài")
                 case .convert(.zip) where files.count > 1: return L("Compress \(files.count) files into one ZIP", "Nén \(files.count) file thành một ZIP")
                 case .convert(let f): return L("Convert to \(f.label)", "Chuyển sang \(f.label)")
-                case .more: return L("See all formats", "Xem tất cả định dạng")
+                case .more: return side == .edit ? L("See all edits", "Xem tất cả thao tác") : L("See all formats", "Xem tất cả định dạng")
                 }
             }
-            if side == .clipboard { return L("Drop here to copy", "Thả vào đây để copy") }
-            return convertItems.isEmpty ? L("This file type can't be converted yet", "Loại file này chưa đổi được") : L("Move outward to pick a format", "Rê ra ngoài để chọn định dạng")
+            switch side {
+            case .clipboard: return L("Drop here to copy", "Thả vào đây để copy")
+            case .convert: return convertItems.isEmpty ? L("This file type can't be converted yet", "Loại file này chưa đổi được") : L("Move outward to pick a format", "Rê ra ngoài để chọn định dạng")
+            case .edit: return editItems.isEmpty ? L("Nothing to edit for this file yet", "Loại file này chưa có thao tác sửa") : L("Move outward to pick an edit", "Rê ra ngoài để chọn thao tác")
+            }
         }
         return files.count == 1 ? files[0].lastPathComponent : L("\(files.count) files", "\(files.count) file")
     }
@@ -164,7 +213,10 @@ final class RadialModel: ObservableObject {
         let r = CGFloat(hypot(dx, dy))
         var angle = atan2(dy, dx) * 180 / .pi
         if angle < 0 { angle += 360 }
-        let side: RadialSide = (angle >= 90 && angle < 270) ? .clipboard : .convert
+        let side: RadialSide = (angle >= 90 && angle < 270) ? .clipboard : RadialGeo.rightSide(angle)
+        // Vòng ngoài nửa phải thuộc về nhóm đang mở (Convert hoặc Edit), dù chuột ở trên hay dưới
+        let outerSide: RadialSide = side == .clipboard ? .clipboard
+            : (expanded == .convert || expanded == .edit) ? expanded! : side
 
         var newSide: RadialSide?
         var newItem: Int?
@@ -179,28 +231,32 @@ final class RadialModel: ObservableObject {
             // Vòng trong: chọn nửa, bung vòng ngoài của nửa đó
             newSide = side
             if !items(side).isEmpty { newExpanded = side }
-        } else if r >= RadialGeo.outerFrom - 3 && r <= RadialGeo.outerTo + 26 && showAll {
-            // Cả vòng tròn đang là định dạng chuyển đổi
-            newExpanded = .convert
-            newSide = .convert
-            let span = 360.0 / Double(convertItems.count)
-            newItem = min(Int((angle - 270 + 360).truncatingRemainder(dividingBy: 360) / span), convertItems.count - 1)
+        } else if r >= RadialGeo.outerFrom - 3 && r <= RadialGeo.outerTo + 26 && showAll, let open = expanded {
+            // Cả vòng tròn đang là lựa chọn của nhóm đang mở
+            let list = items(open)
+            newSide = open
+            let span = 360.0 / Double(list.count)
+            newItem = min(Int((angle - 270 + 360).truncatingRemainder(dividingBy: 360) / span), list.count - 1)
         } else if r >= RadialGeo.outerFrom - 3 && r <= RadialGeo.outerTo + 26 {
             // Vòng ngoài: chọn ô cụ thể
-            let list = items(side)
+            let list = items(outerSide)
             if !list.isEmpty {
-                newExpanded = side
-                newSide = side
-                newItem = itemIndex(side, angle: angle, count: list.count)
+                newExpanded = outerSide
+                newSide = outerSide
+                newItem = itemIndex(outerSide, angle: angle, count: list.count)
             }
         }
 
         if newExpanded != expanded { expanded = newExpanded }
         if newSide != hoveredSide { hoveredSide = newSide }
-        if newItem != hoveredItem { hoveredItem = newItem }
+        if newItem != hoveredItem {
+            hoveredItem = newItem
+            // Rung nhẹ trên trackpad mỗi khi sang ô mới (máy không có Force Touch thì bỏ qua)
+            if newItem != nil { NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now) }
+        }
 
         // Rê vào ô "Thêm" -> bung cả vòng tròn
-        if newSide == .convert, let i = newItem, i < convertItems.count, convertItems[i].target == .more {
+        if let open = newSide, open != .clipboard, let i = newItem, i < items(open).count, items(open)[i].target == .more {
             showAll = true
             hoveredItem = nil
         }
@@ -215,7 +271,7 @@ final class RadialModel: ObservableObject {
         let span = 180.0 / Double(count)
         let raw: Double
         switch side {
-        case .convert: raw = ((angle < 90 ? angle + 360 : angle) - 270) / span
+        case .convert, .edit: raw = ((angle < 90 ? angle + 360 : angle) - 270) / span
         case .clipboard: raw = (270 - angle) / span
         }
         return min(max(Int(raw), 0), count - 1)
@@ -253,20 +309,19 @@ struct RadialMenuView: View {
     @ObservedObject var model: RadialModel
     @State private var appeared = false
 
-    private let clipboardTint = Color(red: 0.22, green: 0.56, blue: 1.0)
-    private let convertTint = Color(red: 1.0, green: 0.52, blue: 0.16)
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             ZStack {
-                if model.expanded == .convert {
-                    outerRing(.convert)
-                        .id(model.showAll)   // đổi bố cục -> chạy lại hiệu ứng bung
+                if let open = model.expanded, open != .clipboard {
+                    outerRing(open)
+                        .id("\(open)-\(model.showAll)")   // đổi bố cục -> chạy lại hiệu ứng bung
                         .transition(.scale(scale: 0.82, anchor: RadialGeo.anchor).combined(with: .opacity))
                 }
                 clipboardSegment(model.clipboardItems[0], range: (90, 180))    // Copy ở dưới
                 clipboardSegment(model.clipboardItems[1], range: (180, 270))   // Khay ở trên
-                innerHalf(.convert)
+                innerHalf(.convert)   // trên
+                innerHalf(.edit)      // dưới
             }
             .opacity(model.status == .idle ? 1 : 0.3)
 
@@ -280,27 +335,31 @@ struct RadialMenuView: View {
         .animation(.spring(response: 0.34, dampingFraction: 0.78), value: model.showAll)
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: model.hoveredItem)
         .animation(.spring(response: 0.22, dampingFraction: 0.7), value: model.hoveredSide)
-        .animation(.easeOut(duration: 0.2), value: model.status)
+        .animation(.spring(response: 0.35, dampingFraction: 0.55), value: model.status)   // ✓ nảy nhẹ khi xong
         .onAppear {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) { appeared = true }
         }
     }
 
     private func tint(_ side: RadialSide) -> Color {
-        side == .clipboard ? clipboardTint : convertTint
+        switch side {
+        case .clipboard: return Theme.clipboard
+        case .convert: return Theme.convert
+        case .edit: return Theme.edit
+        }
     }
 
     // Vòng trong: 2 nửa
     private func clipboardSegment(_ item: RadialItem, range: (Double, Double)) -> some View {
         let hovered = model.hoveredSide == .clipboard && model.hoveredItem == item.id
         return segment(range: range, inner: RadialGeo.innerFrom, outer: RadialGeo.innerTo,
-                       tint: clipboardTint, state: hovered ? .hovered : .normal,
+                       tint: Theme.clipboard, state: hovered ? .hovered : .normal,
                        title: item.title, symbol: item.symbol, big: true)
     }
 
     private func innerHalf(_ side: RadialSide) -> some View {
         let state: SegmentState
-        if side == .convert && model.convertItems.isEmpty {
+        if model.items(side).isEmpty {
             state = .disabled
         } else if model.hoveredSide == side && model.hoveredItem == nil {
             state = .hovered
@@ -312,8 +371,8 @@ struct RadialMenuView: View {
         return segment(range: RadialGeo.sideRange(side),
                        inner: RadialGeo.innerFrom, outer: RadialGeo.innerTo,
                        tint: tint(side), state: state,
-                       title: side == .clipboard ? "Copy" : L("Convert", "Chuyển đổi"),
-                       symbol: side == .clipboard ? "doc.on.clipboard" : "arrow.triangle.2.circlepath",
+                       title: side == .convert ? L("Convert", "Chuyển đổi") : L("Edit", "Chỉnh sửa"),
+                       symbol: side == .convert ? "arrow.triangle.2.circlepath" : "square.and.pencil",
                        big: true)
     }
 
@@ -323,7 +382,7 @@ struct RadialMenuView: View {
         return ZStack {
             ForEach(list) { item in
                 segment(range: RadialGeo.itemRange(side, index: item.id, count: list.count,
-                                                    full: side == .convert && model.showAll),
+                                                    full: model.showAll),
                         inner: RadialGeo.outerFrom, outer: RadialGeo.outerTo,
                         tint: tint(side),
                         state: (model.hoveredSide == side && model.hoveredItem == item.id) ? .hovered : .normal,
@@ -354,10 +413,12 @@ struct RadialMenuView: View {
             shape.stroke(state == .hovered ? Color.white.opacity(0.55) : tint.opacity(state == .disabled ? 0.1 : 0.45),
                          lineWidth: 1)
             VStack(spacing: 3) {
-                Image(systemName: symbol)
-                    .font(.system(size: big ? 19 : 15, weight: .semibold))
-                Text(title)
-                    .font(.system(size: big ? 12 : 11, weight: .bold))
+                if !symbol.isEmpty {
+                    Image(systemName: symbol)
+                        .font(.system(size: big ? 19 : 15, weight: .semibold))
+                }
+                Text(title)   // không có icon (ví dụ JPG, PNG): chữ to hơn cho dễ đọc
+                    .font(.system(size: big ? 12 : (symbol.isEmpty ? 14 : 11), weight: .bold))
                     .lineLimit(1)
                     .fixedSize()
             }
@@ -396,11 +457,13 @@ struct RadialMenuView: View {
             case .done:
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 36))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(.white, .green)
+                    .transition(.scale(scale: 0.2).combined(with: .opacity))
             case .failed:
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 30))
                     .foregroundStyle(.orange)
+                    .transition(.scale(scale: 0.4).combined(with: .opacity))
             }
         }
         .frame(width: RadialGeo.centerRadius * 2, height: RadialGeo.centerRadius * 2)
