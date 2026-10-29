@@ -4,7 +4,7 @@ name: macOS tests
 on:
   workflow_dispatch:
   pull_request:
-    paths: [Sources/**, tests/EditTests.swift, scripts/test-mac.sh, scripts/promo.swift, .github/workflows/mac-tests.yml]
+    paths: [Sources/**, tests/EditTests.swift, scripts/test-mac.sh, scripts/promo*.swift, .github/workflows/mac-tests.yml]
 
 jobs:
   test:
@@ -16,7 +16,9 @@ jobs:
       - name: Run tests
         run: ./scripts/test-mac.sh
       # scripts/promo.sh dựng video giới thiệu từ chính code của app: kiểm tra vẫn biên dịch được
-      - name: Build the promo video script
+      - name: Build the promo video scripts
         run: |
-          mkdir -p "$RUNNER_TEMP/promo" && cp scripts/promo.swift "$RUNNER_TEMP/promo/main.swift"
-          xcrun swiftc -O -sdk "$(xcrun --sdk macosx --show-sdk-path)" $(ls Sources/*.swift | grep -v main.swift) "$RUNNER_TEMP/promo/main.swift" -o "$RUNNER_TEMP/promo/promo"
+          for kind in promo promo-youtube; do
+            mkdir -p "$RUNNER_TEMP/$kind" && cp "scripts/$kind.swift" "$RUNNER_TEMP/$kind/main.swift"
+            xcrun swiftc -O -suppress-warnings -sdk "$(xcrun --sdk macosx --show-sdk-path)" $(ls Sources/*.swift | grep -v main.swift) "$RUNNER_TEMP/$kind/main.swift" -o "$RUNNER_TEMP/$kind/promo"
+          done

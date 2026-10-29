@@ -1,0 +1,30 @@
+# Dựng video giới thiệu trên máy Mac của GitHub và đính kèm vào lần chạy (mục Artifacts) để tải về xem.
+# Tự chạy khi PR sửa script video; chạy tay ở tab Actions để chọn bản tiktok hoặc youtube.
+name: Render promo video
+
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "tiktok (dọc) hoặc youtube (ngang)"
+        type: choice
+        options: [youtube, tiktok]
+        default: youtube
+  pull_request:
+    paths: [scripts/promo*.swift, scripts/promo.sh, .github/workflows/promo-render.yml]
+
+jobs:
+  render:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      KIND: ${{ inputs.kind || 'youtube' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render
+        run: ./scripts/promo.sh "$KIND"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: promo-${{ env.KIND }}
+          path: build/promo/*.mp4
+          retention-days: 14
