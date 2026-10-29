@@ -16,6 +16,11 @@
 
 <p align="center"><a href="https://mktechvn.com/vi/satf"><b>Trang web</b></a> · <a href="README.md">English</a></p>
 
+<p align="center">
+  <a href="https://mktechvn.com/vi/satf#video"><img src="docs/images/promo.gif" alt="SATF: kéo file, lắc nhẹ, thả vào định dạng muốn đổi" width="300"></a>
+  <br><sub>▶ <a href="https://mktechvn.com/vi/satf#video">Xem video 30 giây</a></sub>
+</p>
+
 ---
 
 ## SATF làm được gì?

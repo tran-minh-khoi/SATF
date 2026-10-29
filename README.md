@@ -24,6 +24,11 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
+<p align="center">
+  <a href="https://mktechvn.com/en/satf#video"><img src="docs/images/promo.gif" alt="SATF in action: drag a file, shake it, drop it on a format" width="300"></a>
+  <br><sub>▶ <a href="https://mktechvn.com/en/satf#video">Watch the 30-second video</a></sub>
+</p>
+
 ---
 
 ## Why SATF?
@@ -229,17 +234,20 @@ The version number lives in [`VERSION`](VERSION). All icons are generated from [
 │   ├── Shelf.swift             Floating shelf
 │   ├── Settings*.swift         Settings & language
 │   ├── ShakeDetector.swift     Shake gesture
-│   └── HotKeyManager.swift     Global shortcuts (incl. Esc)
+│   ├── HotKeyManager.swift     Global shortcuts (incl. Esc)
+│   └── Updater.swift           Automatic updates
 ├── Windows/                  Windows app (C# · WPF)
 │   ├── RadialMenuWindow.cs     The radial menu
 │   ├── Converter.cs            All conversions
 │   ├── Archivers.cs            7-Zip, WinRAR, Bandizip
 │   ├── AddOns.cs               Add-on download / remove
 │   ├── SettingsWindow.cs       Settings
+│   ├── Updater.cs              Automatic updates
 │   └── installer.nsi           Windows installer (NSIS)
 ├── assets/logo.png           Logo, source of every app icon
 ├── docs/images/              README screenshots
 ├── scripts/screenshots.sh    Regenerates the screenshots
+├── scripts/promo.sh          Renders the vertical promo video (build/promo/)
 ├── build.sh · build-win.sh   Build scripts
 └── VERSION                   Version for both apps
 ```
