@@ -40,15 +40,50 @@ public static class Converter
     public const string MergePdf = "MERGE_PDF";
     /// Một PDF -> mỗi trang một PDF
     public const string SplitPdf = "SPLIT_PDF";
+    // Nhóm "Edit" (giống bản Mac): kết quả luôn là file mới bên cạnh file gốc
+    public const string Rotate = "ROTATE";          // xoay 90° theo chiều kim đồng hồ (ảnh, PDF)
+    public const string Resize = "RESIZE";          // thu nhỏ ảnh theo cạnh dài trong Cài đặt
+    public const string Compress = "COMPRESS";      // nén ảnh JPG/WebP theo mức trong Cài đặt
+    public const string Shrink = "SHRINK";          // ép ảnh xuống dưới dung lượng trong Cài đặt
+    public const string Clean = "CLEAN";            // xoá EXIF, vị trí GPS
+    public const string Stack = "STACK";            // nhiều ảnh -> một ảnh dài
+
+    public static bool IsEdit(string fmt) => fmt is MergePdf or SplitPdf or Rotate or Resize or Compress or Shrink or Clean or Stack;
 
     /// Tên hiện trên menu
     public static string Label(string fmt) => fmt switch
     {
         "EXTRACT" => L("Extract", "Giải nén"),
         MergePdf => L("Merge PDF", "Gộp PDF"),
-        SplitPdf => L("Split PDF", "Tách PDF"),
+        SplitPdf => L("Split pages", "Tách trang"),
+        Rotate => L("Rotate", "Xoay"),
+        Resize => L("Resize", "Thu nhỏ"),
+        Compress => L("Compress", "Nén ảnh"),
+        Shrink => "< " + AppSettings.SizeLabel(AppSettings.Current.TargetSizeKB),
+        Clean => L("Clean info", "Xoá EXIF"),
+        Stack => L("Stack", "Ghép dọc"),
         _ => fmt,
     };
+
+    /// Dòng mô tả dưới menu khi rê vào
+    public static string Caption(string fmt, int count) => fmt switch
+    {
+        "EXTRACT" => L("Extract here", "Giải nén tại đây"),
+        MergePdf => L($"Merge {count} files into one PDF", $"Gộp {count} file thành một PDF"),
+        SplitPdf => L("One PDF per page", "Tách mỗi trang thành một PDF"),
+        "ZIP" when count > 1 => L($"Compress {count} files into one ZIP", $"Nén {count} file thành một ZIP"),
+        Rotate => L("Rotate 90° · saves a copy", "Xoay 90° · lưu thành bản mới"),
+        Resize => L($"Resize to {AppSettings.Current.ResizeEdge}px on the long side", $"Thu nhỏ còn cạnh dài {AppSettings.Current.ResizeEdge}px"),
+        Compress => L($"Make it smaller · {AppSettings.LevelLabel(AppSettings.Current.CompressLevel)}", $"Giảm dung lượng · {AppSettings.LevelLabel(AppSettings.Current.CompressLevel)}"),
+        Shrink => L($"Make it under {AppSettings.SizeLabel(AppSettings.Current.TargetSizeKB)}", $"Ép xuống dưới {AppSettings.SizeLabel(AppSettings.Current.TargetSizeKB)}"),
+        Clean => L("Remove location & camera info", "Xoá vị trí & thông tin máy chụp"),
+        Stack => L($"Stack {count} images into one tall image", $"Ghép {count} ảnh thành một ảnh dài"),
+        _ => L($"Convert to {Label(fmt)}", $"Chuyển sang {Label(fmt)}"),
+    };
+
+    /// Định dạng ảnh (đổi giữa các định dạng ảnh thì chỉ hiện tên, không cần icon)
+    public static bool IsImageFormat(string fmt) => fmt is "JPG" or "PNG" or "WEBP" or "GIF" or "TIFF" or "BMP";
+    public static bool IsImage(string path) => KindOf(path) == Kind.Image;
 
     /// Dòng thông báo khi đang làm lâu
     public static string ProgressTitle(string fmt) => fmt switch
@@ -57,6 +92,8 @@ public static class Converter
         "ZIP" => L("Compressing…", "Đang nén…"),
         MergePdf => L("Merging into one PDF…", "Đang gộp thành một PDF…"),
         SplitPdf => L("Splitting PDF…", "Đang tách PDF…"),
+        Stack => L("Stacking images…", "Đang ghép ảnh…"),
+        Rotate or Resize or Compress or Shrink or Clean => L("Working…", "Đang xử lý…"),
         _ => L($"Converting to {fmt}…", $"Đang chuyển sang {fmt}…"),
     };
 
@@ -70,7 +107,7 @@ public static class Converter
         string[] list = KindOf(filePath) switch
         {
             Kind.Image => ["JPG", "PNG", "PDF", "WEBP", "GIF", "TIFF", "BMP"],
-            Kind.Pdf => ["JPG", "PNG", SplitPdf, "DOCX"],
+            Kind.Pdf => ["JPG", "PNG", "DOCX", SplitPdf, Rotate],
             Kind.Word => ["PDF", "DOCX", "TXT", "RTF", "HTML", "ODT"],
             Kind.Excel => ["PDF", "XLSX", "CSV"],
             Kind.PowerPoint => ["PDF", "PNG", "JPG", "PPTX"],
@@ -83,8 +120,19 @@ public static class Converter
         {
             "JPEG" => "JPG", "TIF" => "TIFF", "HTM" => "HTML", var e => e,
         };
-        return list.Where(f => f != own).Append("ZIP").ToList();
+        var result = list.Where(f => f != own).ToList();
+        if (KindOf(filePath) == Kind.Image && EditableExts.Contains(own))
+        {
+            result.AddRange([Rotate, Resize]);
+            if (own is "JPG" or "WEBP") result.Add(Compress);
+            result.AddRange([Shrink, Clean]);
+        }
+        result.Add("ZIP");
+        return result;
     }
+
+    /// Ảnh sửa được và lưu lại đúng định dạng gốc (GIF động, ICO, HEIC/AVIF thì không: Windows không ghi được)
+    private static readonly HashSet<string> EditableExts = ["JPG", "PNG", "BMP", "TIFF", "WEBP"];
 
     /// Nhiều file:
     /// - "Gộp PDF" đứng đầu nếu file nào cũng đổi được sang PDF (PDF, Word, Excel, PowerPoint, ảnh, văn bản)
@@ -98,9 +146,11 @@ public static class Converter
         var common = GetTargetFormats(files[0]).Where(f => f != "ZIP").ToList();
         foreach (var f in files.Skip(1)) common = common.Intersect(GetTargetFormats(f)).ToList();
 
+        // Gộp/ghép đứng đầu nhóm Edit vì đó là lý do hay cầm nhiều file nhất
         var result = new List<string>();
         if (files.All(f => KindOf(f) is Kind.Image or Kind.Pdf or Kind.Word or Kind.Excel or Kind.PowerPoint or Kind.Text))
             result.Add(MergePdf);
+        if (files.All(f => KindOf(f) == Kind.Image)) result.Add(Stack);
         result.AddRange(common);
         result.Add("ZIP");
         return result;
@@ -121,7 +171,7 @@ public static class Converter
     public static AddOn? RequiredAddOn(string src, string fmt)
     {
         fmt = fmt.ToUpperInvariant();
-        if (fmt is "ZIP" or SplitPdf) return null;
+        if (fmt is "ZIP" or SplitPdf or Rotate or Resize or Compress or Shrink or Clean or Stack) return null;
         var kind = KindOf(src);
         if (fmt == MergePdf)
         {
@@ -149,6 +199,7 @@ public static class Converter
     {
         fmt = fmt.ToUpperInvariant();
         if (fmt == MergePdf) return [MergeToPdf(files)];
+        if (fmt == Stack) return [StackImages(files)];
         if (fmt == "ZIP" && files.Count > 1) return [ZipMany(files, tool ?? AppSettings.Current.Compressor)];
         var created = new List<string>();
         foreach (var f in files) created.AddRange(ConvertFile(f, fmt, tool));
@@ -164,6 +215,9 @@ public static class Converter
         if (fmt == "EXTRACT") return [Extract(src, tool ?? AppSettings.Current.Extractor)];
         if (fmt == MergePdf) return [MergeToPdf([src])];
         if (fmt == SplitPdf) return SplitPdfPages(src);
+        if (fmt == Stack) return [StackImages([src])];
+        if (fmt == Rotate && KindOf(src) == Kind.Pdf) return [RotatePdf(src)];
+        if (fmt is Rotate or Resize or Compress or Shrink or Clean) return [EditImage(src, fmt)];
 
         switch (KindOf(src))
         {
@@ -315,6 +369,202 @@ public static class Converter
         }
         if (output.Count == 0) throw new InvalidOperationException(L("This PDF is empty", "File PDF trống"));
         return output;
+    }
+
+    // MARK: - Sửa ảnh (lưu lại đúng định dạng gốc)
+
+    /// Ảnh đã xoay đúng chiều theo EXIF (ảnh chụp điện thoại hay lưu nằm ngang + cờ xoay)
+    private static BitmapSource DecodeOriented(string path)
+    {
+        var img = Decode(path);
+        int orientation = 1;
+        try
+        {
+            using var fs = File.OpenRead(path);
+            var frame = BitmapDecoder.Create(fs, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
+            if ((frame.Metadata as BitmapMetadata)?.GetQuery("System.Photo.Orientation") is ushort o) orientation = o;
+        }
+        catch { }
+        Transform? t = orientation switch
+        {
+            2 => new ScaleTransform(-1, 1), 3 => new RotateTransform(180), 4 => new ScaleTransform(1, -1),
+            5 => new TransformGroup { Children = { new ScaleTransform(-1, 1), new RotateTransform(270) } },
+            6 => new RotateTransform(90),
+            7 => new TransformGroup { Children = { new ScaleTransform(-1, 1), new RotateTransform(90) } },
+            8 => new RotateTransform(270),
+            _ => null,
+        };
+        if (t == null) return img;
+        var turned = new TransformedBitmap(img, t);
+        turned.Freeze();
+        return turned;
+    }
+
+    private static string ExtOf(string path) => Path.GetExtension(path).TrimStart('.').ToUpperInvariant() switch
+    {
+        "JPEG" => "JPG", "TIF" => "TIFF", var e => e,
+    };
+
+    /// Mã hoá ảnh với chất lượng tuỳ chọn (JPG/WebP); định dạng khác không mất dữ liệu
+    private static byte[] EncodeImage(BitmapSource img, string fmt, int quality)
+    {
+        if (fmt == "WEBP")
+        {
+            using var bmp = SKBitmap.Decode(EncodeBytes(img, new PngBitmapEncoder()));
+            using var data = bmp.Encode(SKEncodedImageFormat.Webp, quality);
+            return data.ToArray();
+        }
+        BitmapEncoder enc = fmt switch
+        {
+            "JPG" => new JpegBitmapEncoder { QualityLevel = quality },
+            "BMP" => new BmpBitmapEncoder(),
+            "TIFF" => new TiffBitmapEncoder(),
+            "PNG" => new PngBitmapEncoder(),
+            _ => throw new NotSupportedException(L($"Couldn't save as {fmt}", $"Chưa lưu được ảnh {fmt}")),
+        };
+        if (fmt is "JPG" or "BMP") img = OnWhite(img);
+        return EncodeBytes(img, enc);
+    }
+
+    private static string EditImage(string src, string op)
+    {
+        var ext = ExtOf(src);
+        if (!EditableExts.Contains(ext)) throw new NotSupportedException(L("This image type can't be edited", "Loại ảnh này chưa sửa được"));
+        string Save(BitmapSource img, string suffix, int quality = 90)
+        {
+            var dst = Destination(src, ext, suffix);
+            File.WriteAllBytes(dst, EncodeImage(img, ext, quality));
+            return dst;
+        }
+
+        switch (op)
+        {
+            case Rotate:
+                var turned = new TransformedBitmap(DecodeOriented(src), new RotateTransform(90));
+                return Save(turned, L(" (rotated)", " (xoay)"));
+
+            case Resize:
+            {
+                int edge = AppSettings.Current.ResizeEdge;
+                var img = DecodeOriented(src);
+                int longSide = Math.Max(img.PixelWidth, img.PixelHeight);
+                if (longSide <= edge) throw new InvalidOperationException(L($"This image is already {edge}px or smaller", $"Ảnh này đã nhỏ hơn {edge}px"));
+                double k = (double)edge / longSide;
+                return Save(new TransformedBitmap(img, new ScaleTransform(k, k)), $" ({edge}px)");
+            }
+
+            case Compress:
+            {
+                var dst = Save(DecodeOriented(src), L(" (compressed)", " (nén)"), AppSettings.Quality(AppSettings.Current.CompressLevel));
+                // Ảnh đã nén sẵn: kết quả không nhỏ hơn thì bỏ, khỏi để lại file thừa
+                if (new FileInfo(dst).Length >= new FileInfo(src).Length)
+                {
+                    File.Delete(dst);
+                    throw new InvalidOperationException(L("This image is already well compressed", "Ảnh này đã được nén tốt rồi"));
+                }
+                return dst;
+            }
+
+            case Shrink:
+                return ShrinkImage(src);
+
+            case Clean:
+                // Mã hoá lại không kèm metadata (WPF không chép metadata sang file mới). Hướng xoay được áp thẳng vào ảnh.
+                return Save(DecodeOriented(src), L(" (clean)", " (sạch)"), 95);
+        }
+        throw new NotSupportedException(op);
+    }
+
+    /// Hạ chất lượng (và nếu cần thì thu nhỏ) tới khi file dưới dung lượng trong Cài đặt. PNG/BMP/TIFF lưu thành JPG.
+    private static string ShrinkImage(string src)
+    {
+        int limitKB = AppSettings.Current.TargetSizeKB;
+        long limit = limitKB * 1000L;
+        var label = AppSettings.SizeLabel(limitKB);
+        if (new FileInfo(src).Length <= limit) throw new InvalidOperationException(L($"This image is already under {label}", $"Ảnh này đã dưới {label} rồi"));
+
+        var ext = ExtOf(src) is "JPG" or "WEBP" ? ExtOf(src) : "JPG";
+        BitmapSource full = DecodeOriented(src), img = full;
+        while (true)
+        {
+            // Tìm chất lượng cao nhất còn vừa dung lượng (chia đôi 6 lần, đủ mịn)
+            int low = 30, high = 92;
+            byte[]? best = null;
+            var first = EncodeImage(img, ext, low);
+            if (first.Length <= limit)
+            {
+                best = first;
+                for (int i = 0; i < 6; i++)
+                {
+                    int mid = (low + high) / 2;
+                    var d = EncodeImage(img, ext, mid);
+                    if (d.Length <= limit) { best = d; low = mid; } else high = mid;
+                }
+            }
+            if (best != null)
+            {
+                var dst = Destination(src, ext, L($" (under {label})", $" (dưới {label})"));
+                File.WriteAllBytes(dst, best);
+                return dst;
+            }
+            // Chất lượng thấp nhất vẫn quá nặng -> thu nhỏ 20% rồi thử lại
+            double k = img.PixelWidth * 0.8 / full.PixelWidth;
+            if (Math.Max(full.PixelWidth, full.PixelHeight) * k < 320)
+                throw new InvalidOperationException(L($"Couldn't get this image under {label}", $"Không ép được ảnh này xuống dưới {label}"));
+            var smaller = new TransformedBitmap(full, new ScaleTransform(k, k));
+            smaller.Freeze();
+            img = smaller;
+        }
+    }
+
+    /// Nhiều ảnh -> một ảnh dài, xếp từ trên xuống theo thứ tự đang cầm, cùng chiều rộng.
+    private static string StackImages(IReadOnlyList<string> files)
+    {
+        var images = files.Select(DecodeOriented).ToList();
+        // ponytail: giới hạn kích thước cố định để không ngốn RAM; muốn ảnh lớn hơn thì cho chọn trong Cài đặt
+        int width = Math.Min(images.Max(i => i.PixelWidth), 1600);
+        int Height(int w) => images.Sum(i => (int)Math.Round(i.PixelHeight * (double)w / i.PixelWidth));
+        while (Height(width) > 30_000 && width > 400) width = width * 3 / 4;
+        int total = Height(width);
+
+        var dv = new DrawingVisual();
+        RenderOptions.SetBitmapScalingMode(dv, BitmapScalingMode.HighQuality);
+        using (var dc = dv.RenderOpen())
+        {
+            double top = 0;
+            foreach (var img in images)
+            {
+                double h = Math.Round(img.PixelHeight * (double)width / img.PixelWidth);
+                dc.DrawImage(img, new Rect(0, top, width, h));
+                top += h;
+            }
+        }
+        var rtb = new RenderTargetBitmap(width, total, 96, 96, PixelFormats.Pbgra32);
+        rtb.Render(dv);
+
+        bool allPng = files.All(f => ExtOf(f) == "PNG");
+        var dst = Destination(files[0], allPng ? "PNG" : "JPG", L(" (stacked)", " (ghép)"));
+        File.WriteAllBytes(dst, EncodeImage(rtb, allPng ? "PNG" : "JPG", 90));
+        return dst;
+    }
+
+    /// Xoay mọi trang 90° theo chiều kim đồng hồ
+    private static string RotatePdf(string src)
+    {
+        PdfDocument doc;
+        try { doc = PdfReader.Open(src, PdfDocumentOpenMode.Modify); }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            throw new InvalidOperationException(L($"Couldn't open {Path.GetFileName(src)}. It may be password-protected or damaged.",
+                                                  $"Không mở được {Path.GetFileName(src)}, có thể file đang khoá mật khẩu hoặc bị hỏng."), ex);
+        }
+        using (doc)
+        {
+            foreach (var page in doc.Pages) page.Rotate = (page.Rotate + 90) % 360;
+            var dst = Destination(src, "PDF", L(" (rotated)", " (xoay)"));
+            doc.Save(dst);
+            return dst;
+        }
     }
 
     // MARK: - Gộp / tách PDF

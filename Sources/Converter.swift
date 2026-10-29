@@ -8,10 +8,27 @@ import UniformTypeIdentifiers
 enum Format: String, CaseIterable, Identifiable {
     case png, jpg, webp, heic, gif, tiff, bmp, avif, ico, pdf, txt, rtf, docx, odt, html, csv, mp4, mov, m4a, wav, aiff, zip
     case extract    // giải nén
+    // Nhóm "Edit": chỉnh file, kết quả luôn là file mới bên cạnh file gốc
     case mergePDF   // nhiều file -> một PDF
     case splitPDF   // một PDF -> mỗi trang một PDF
+    case rotate     // xoay 90° theo chiều kim đồng hồ (ảnh, PDF)
+    case resize     // thu nhỏ ảnh, cạnh dài tối đa 1920px
+    case compress   // nén ảnh JPG/HEIC/WebP/AVIF theo mức trong Settings
+    case shrink     // ép ảnh xuống dưới dung lượng chọn trong Settings (mặc định 1 MB)
+    case stripMetadata  // xoá EXIF, vị trí GPS
+    case longImage  // nhiều ảnh -> một ảnh dài
 
     var id: String { rawValue }
+
+    var isEdit: Bool {
+        switch self {
+        case .mergePDF, .splitPDF, .rotate, .resize, .compress, .shrink, .stripMetadata, .longImage: return true
+        default: return false
+        }
+    }
+
+    /// Thao tác gộp nhiều file thành một
+    var combinesFiles: Bool { self == .mergePDF || self == .longImage }
 
     var ext: String {
         switch self {
@@ -24,7 +41,13 @@ enum Format: String, CaseIterable, Identifiable {
         switch self {
         case .extract: return L("Extract", "Giải nén")
         case .mergePDF: return L("Merge PDF", "Gộp PDF")
-        case .splitPDF: return L("Split PDF", "Tách PDF")
+        case .splitPDF: return L("Split pages", "Tách trang")
+        case .rotate: return L("Rotate", "Xoay")
+        case .resize: return L("Resize", "Thu nhỏ")
+        case .compress: return L("Compress", "Nén ảnh")
+        case .shrink: return L("< ", "< ") + sizeLabel(Settings.shared.targetSizeKB)
+        case .stripMetadata: return L("Clean info", "Xoá EXIF")
+        case .longImage: return L("Stack", "Ghép dọc")
         default: return rawValue.uppercased()
         }
     }
@@ -36,6 +59,8 @@ enum Format: String, CaseIterable, Identifiable {
         case .zip: return L("Compressing…", "Đang nén…")
         case .mergePDF: return L("Merging into one PDF…", "Đang gộp thành một PDF…")
         case .splitPDF: return L("Splitting PDF…", "Đang tách PDF…")
+        case .longImage: return L("Stacking images…", "Đang ghép ảnh…")
+        case .rotate, .resize, .compress, .shrink, .stripMetadata: return L("Working…", "Đang xử lý…")
         default: return L("Converting to \(label)…", "Đang chuyển sang \(label)…")
         }
     }
@@ -105,7 +130,13 @@ enum Converter {
         case .image:
             all = [.jpg, .png, .pdf, .webp, .heic, .gif, .tiff, .bmp, .avif, .ico]
                 .filter { $0 == .pdf || $0 == .webp || writableImageTypes.contains($0.imageType?.identifier ?? "") }
-        case .pdf:          all = [.jpg, .png, .splitPDF, .txt]
+            if canEditInPlace(url) {
+                all += [.rotate, .resize]
+                if lossyExts.contains(normalizedExt(url)) { all.append(.compress) }
+                all.append(.shrink)
+                all.append(.stripMetadata)
+            }
+        case .pdf:          all = [.jpg, .png, .txt, .splitPDF, .rotate]
         case .document:     all = [.pdf, .docx, .txt, .rtf, .html, .odt]
         case .spreadsheet:  all = [.pdf, .csv]
         case .presentation: all = [.pdf, .png, .jpg]
@@ -136,7 +167,19 @@ enum Converter {
             common = common.filter { t.contains($0) }
         }
         let canMerge = urls.allSatisfy { pdfKinds.contains(kind(of: $0)) }
-        return (canMerge ? [.mergePDF] : []) + common + [.zip]
+        let canStack = urls.allSatisfy { kind(of: $0) == .image }
+        // Gộp/ghép đứng đầu nhóm Edit vì đó là lý do hay cầm nhiều file nhất
+        return (canMerge ? [.mergePDF] : []) + (canStack ? [.longImage] : []) + common + [.zip]
+    }
+
+    /// Ảnh sửa được và lưu lại đúng định dạng gốc (GIF động, SVG, ICO thì không)
+    private static let editableImageExts: Set<String> = ["jpg", "png", "heic", "heif", "tiff", "bmp", "webp", "avif"]
+    private static let lossyExts: Set<String> = ["jpg", "heic", "heif", "webp", "avif"]
+
+    private static func canEditInPlace(_ url: URL) -> Bool {
+        let ext = normalizedExt(url)
+        guard editableImageExts.contains(ext) else { return false }
+        return ext == "webp" || writableImageTypes.contains(UTType(filenameExtension: ext)?.identifier ?? "")
     }
 
     // MARK: - Chạy chuyển đổi
@@ -144,15 +187,7 @@ enum Converter {
     static func run(_ files: [URL], to format: Format, completion: @escaping (Result<[URL], Error>) -> Void) {
         let work = {
             do {
-                var output: [URL] = []
-                switch format {
-                case .mergePDF:
-                    output = [try mergePDF(files)]
-                case .zip where files.count > 1:
-                    output = [try zip(files)]   // nhiều file -> một file ZIP
-                default:
-                    for file in files { output += try convert(file, to: format) }
-                }
+                let output = try process(files, format)
                 DispatchQueue.main.async { completion(.success(output)) }
             } catch {
                 // Lỗi hệ thống thường khó hiểu -> đổi thành câu dễ hiểu
@@ -163,11 +198,24 @@ enum Converter {
         DispatchQueue.global(qos: .userInitiated).async(execute: work)
     }
 
+    /// Chạy đồng bộ (gọi từ luồng nền)
+    static func process(_ files: [URL], _ format: Format) throws -> [URL] {
+        switch format {
+        case .mergePDF: return [try mergePDF(files)]
+        case .longImage: return [try stackImages(files)]
+        case .zip where files.count > 1: return [try zip(files)]   // nhiều file -> một file ZIP
+        default: return try files.flatMap { try convert($0, to: format) }
+        }
+    }
+
     static func convert(_ src: URL, to format: Format) throws -> [URL] {
         if format == .zip { return [try zip(src)] }
         if format == .extract { return [try extract(src)] }
         if format == .mergePDF { return [try mergePDF([src])] }
         if format == .splitPDF { return try splitPDF(src) }
+        if format == .longImage { return [try stackImages([src])] }
+        if format == .rotate && kind(of: src) == .pdf { return [try rotatePDF(src)] }
+        if [.rotate, .resize, .compress, .shrink, .stripMetadata].contains(format) { return [try editImage(src, format)] }
         switch kind(of: src) {
         case .image:          return [try convertImage(src, to: format)]
         case .pdf:            return try convertPDF(src, to: format)
@@ -271,15 +319,15 @@ enum Converter {
     }
 
     /// macOS không có bộ ghi WebP → dùng cwebp đóng gói kèm app.
-    private static func writeWebP(_ image: CGImage, to dst: URL) throws {
+    private static func writeWebP(_ image: CGImage, to dst: URL, quality: Int = 90) throws {
         guard let cwebp = Tools.cwebp else { throw ConvertError(L("Part of SATF is missing. Please reinstall the app.", "Thiếu một phần của SATF, hãy cài lại app")) }
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".png")
         defer { try? FileManager.default.removeItem(at: tmp) }
         try writeImage(image, to: tmp, type: .png)
-        try shell(cwebp, ["-quiet", "-q", "90", "-alpha_q", "100", tmp.path, "-o", dst.path])
+        try shell(cwebp, ["-quiet", "-q", "\(quality)", "-alpha_q", "100", tmp.path, "-o", dst.path])
     }
 
-    private static func writeImage(_ image: CGImage, to dst: URL, type: UTType, properties: [CFString: Any] = [:]) throws {
+    private static func writeImage(_ image: CGImage, to dst: URL, type: UTType, properties: [CFString: Any] = [:], quality: Double = 0.9) throws {
         var img = image
         if type == .jpeg, hasAlpha(image), let flat = flattenOnWhite(image) { img = flat }  // JPG không có nền trong suốt
 
@@ -287,7 +335,7 @@ enum Converter {
             throw ConvertError(L("This Mac can't save \((type.preferredFilenameExtension ?? "").uppercased()) files", "Máy này chưa hỗ trợ định dạng \((type.preferredFilenameExtension ?? "").uppercased())"))
         }
         var opts = properties
-        opts[kCGImageDestinationLossyCompressionQuality] = 0.9
+        opts[kCGImageDestinationLossyCompressionQuality] = quality
         CGImageDestinationAddImage(dest, img, opts as CFDictionary)
         guard CGImageDestinationFinalize(dest) else { throw ConvertError(L("Couldn't save the image", "Không lưu được ảnh")) }
     }
@@ -435,6 +483,200 @@ enum Converter {
             output.append(dst)
         }
         return output
+    }
+
+    /// Xoay mọi trang 90° theo chiều kim đồng hồ
+    private static func rotatePDF(_ src: URL) throws -> URL {
+        guard let doc = PDFDocument(url: src) else { throw ConvertError(L("Couldn't open this PDF", "Không mở được file PDF này")) }
+        if doc.isLocked { throw ConvertError(L("This PDF is password-protected", "File PDF đang khoá mật khẩu")) }
+        for i in 0..<doc.pageCount {
+            if let page = doc.page(at: i) { page.rotation = (page.rotation + 90) % 360 }
+        }
+        let dst = destination(for: src, ext: "pdf", suffix: L(" (rotated)", " (xoay)"))
+        guard doc.write(to: dst) else { throw ConvertError(L("Couldn't save the PDF", "Không ghi được file PDF")) }
+        return dst
+    }
+
+    // MARK: - Sửa ảnh (lưu lại đúng định dạng gốc)
+
+    private static func editImage(_ src: URL, _ op: Format) throws -> URL {
+        let ext = normalizedExt(src)
+        guard canEditInPlace(src), let type = UTType(filenameExtension: ext) else {
+            throw ConvertError(L("This image type can't be edited", "Loại ảnh này chưa sửa được"))
+        }
+        let unreadable = ConvertError(L("Couldn't read the image \(src.lastPathComponent)", "Không đọc được ảnh \(src.lastPathComponent)"))
+        func save(_ image: CGImage, suffix: String, quality: Double = 0.9) throws -> URL {
+            let dst = destination(for: src, ext: ext, suffix: suffix)
+            if ext == "webp" { try writeWebP(image, to: dst, quality: Int(quality * 100)) }
+            else { try writeImage(image, to: dst, type: type, quality: quality) }
+            return dst
+        }
+
+        switch op {
+        case .rotate:
+            guard let image = orientedImage(src, maxPixel: nil), let turned = rotateClockwise(image) else { throw unreadable }
+            return try save(turned, suffix: L(" (rotated)", " (xoay)"))
+
+        case .resize:
+            let edge = Settings.shared.resizeEdge
+            guard let size = pixelSize(src) else { throw unreadable }
+            guard Int(max(size.width, size.height)) > edge else {
+                throw ConvertError(L("This image is already \(edge)px or smaller", "Ảnh này đã nhỏ hơn \(edge)px"))
+            }
+            guard let image = orientedImage(src, maxPixel: edge) else { throw unreadable }
+            return try save(image, suffix: " (\(edge)px)")
+
+        case .compress:
+            guard let image = orientedImage(src, maxPixel: nil) else { throw unreadable }
+            let dst = try save(image, suffix: L(" (compressed)", " (nén)"), quality: Settings.shared.compressLevel.quality)
+            // Ảnh đã nén sẵn: kết quả không nhỏ hơn thì bỏ, khỏi để lại file thừa
+            if fileSize(dst) >= fileSize(src) {
+                try? FileManager.default.removeItem(at: dst)
+                throw ConvertError(L("This image is already well compressed", "Ảnh này đã được nén tốt rồi"))
+            }
+            return dst
+
+        case .shrink:
+            return try shrink(src)
+
+        case .stripMetadata:
+            let suffix = L(" (clean)", " (sạch)")
+            // cwebp mặc định không chép metadata
+            if ext == "webp" {
+                guard let image = orientedImage(src, maxPixel: nil) else { throw unreadable }
+                return try save(image, suffix: suffix)
+            }
+            // Chép nguyên ảnh (không nén lại), chỉ thay metadata bằng rỗng. Giữ hướng xoay để ảnh không bị lật.
+            guard let source = CGImageSourceCreateWithURL(src as CFURL, nil), let sourceType = CGImageSourceGetType(source) else { throw unreadable }
+            let dst = destination(for: src, ext: ext, suffix: suffix)
+            guard let dest = CGImageDestinationCreateWithURL(dst as CFURL, sourceType, 1, nil) else { throw unreadable }
+            // Metadata rỗng, chỉ giữ lại hướng xoay (không dùng chung được kCGImageDestinationOrientation)
+            let meta = CGImageMetadataCreateMutable()
+            if let o = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])?[kCGImagePropertyOrientation] as? NSNumber {
+                CGImageMetadataSetValueMatchingImageProperty(meta, kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFOrientation, o)
+            }
+            let opts: [CFString: Any] = [kCGImageDestinationMetadata: meta, kCGImageDestinationMergeMetadata: false]
+            guard CGImageDestinationCopyImageSource(dest, source, opts as CFDictionary, nil) else {
+                throw ConvertError(L("Couldn't save the image", "Không lưu được ảnh"))
+            }
+            return dst
+
+        default:
+            throw ConvertError(L("Unsupported format", "Định dạng không hợp lệ"))
+        }
+    }
+
+    /// Hạ chất lượng (và nếu cần thì thu nhỏ) tới khi file dưới dung lượng chọn trong Settings.
+    /// Ảnh không nén mất dữ liệu được (PNG, TIFF, BMP) thì lưu thành JPG.
+    private static func shrink(_ src: URL) throws -> URL {
+        let limitKB = Settings.shared.targetSizeKB
+        let limit = limitKB * 1000
+        guard fileSize(src) > limit else {
+            throw ConvertError(L("This image is already under \(sizeLabel(limitKB))", "Ảnh này đã dưới \(sizeLabel(limitKB)) rồi"))
+        }
+        guard let full = orientedImage(src, maxPixel: nil) else {
+            throw ConvertError(L("Couldn't read the image \(src.lastPathComponent)", "Không đọc được ảnh \(src.lastPathComponent)"))
+        }
+        let ext = lossyExts.contains(normalizedExt(src)) && canEditInPlace(src) ? normalizedExt(src) : "jpg"
+
+        var image = full
+        while true {
+            // Tìm chất lượng cao nhất còn vừa dung lượng (chia đôi 6 lần, đủ mịn)
+            var low = 0.3, high = 0.92, best: Data?
+            if let d = try encode(image, ext: ext, quality: low), d.count <= limit {
+                best = d
+                for _ in 0..<6 {
+                    let mid = (low + high) / 2
+                    if let d = try encode(image, ext: ext, quality: mid), d.count <= limit { best = d; low = mid } else { high = mid }
+                }
+            }
+            if let data = best {
+                let dst = destination(for: src, ext: ext, suffix: L(" (under ", " (dưới ") + sizeLabel(limitKB) + ")")
+                try data.write(to: dst)
+                return dst
+            }
+            // Chất lượng thấp nhất vẫn quá nặng -> thu nhỏ 20% rồi thử lại
+            let w = image.width * 4 / 5, h = image.height * 4 / 5
+            guard max(w, h) >= 320, let smaller = scaled(full, width: w, height: h) else {
+                throw ConvertError(L("Couldn't get this image under \(sizeLabel(limitKB))", "Không ép được ảnh này xuống dưới \(sizeLabel(limitKB))"))
+            }
+            image = smaller
+        }
+    }
+
+    private static func encode(_ image: CGImage, ext: String, quality: Double) throws -> Data? {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        if ext == "webp" { try writeWebP(image, to: tmp, quality: Int(quality * 100)) }
+        else { try writeImage(image, to: tmp, type: UTType(filenameExtension: ext) ?? .jpeg, quality: quality) }
+        return try? Data(contentsOf: tmp)
+    }
+
+    private static func scaled(_ image: CGImage, width: Int, height: Int) -> CGImage? {
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return ctx.makeImage()
+    }
+
+    private static func pixelSize(_ src: URL) -> CGSize? {
+        guard let s = CGImageSourceCreateWithURL(src as CFURL, nil),
+              let p = CGImageSourceCopyPropertiesAtIndex(s, 0, nil) as? [CFString: Any],
+              let w = p[kCGImagePropertyPixelWidth] as? Int, let h = p[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        return CGSize(width: w, height: h)
+    }
+
+    private static func fileSize(_ url: URL) -> Int {
+        (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+    }
+
+    private static func rotateClockwise(_ image: CGImage) -> CGImage? {
+        let w = image.width, h = image.height
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: h, height: w, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        // Hệ toạ độ CG có trục y hướng lên: xoay -90° rồi đẩy lên trên = xoay theo chiều kim đồng hồ
+        ctx.translateBy(x: 0, y: CGFloat(w))
+        ctx.rotate(by: -.pi / 2)
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
+    }
+
+    /// Nhiều ảnh -> một ảnh dài, xếp từ trên xuống theo thứ tự đang cầm, cùng chiều rộng.
+    private static func stackImages(_ files: [URL]) throws -> URL {
+        let images = try files.map { file -> CGImage in
+            guard let img = orientedImage(file, maxPixel: nil) else {
+                throw ConvertError(L("Couldn't read the image \(file.lastPathComponent)", "Không đọc được ảnh \(file.lastPathComponent)"))
+            }
+            return img
+        }
+        // ponytail: giới hạn kích thước cố định để không ngốn RAM; muốn ảnh lớn hơn thì cho chọn trong Settings
+        var width = min(images.map(\.width).max() ?? 0, 1600)
+        func height(_ w: Int) -> Int { images.reduce(0) { $0 + Int((Double($1.height) * Double(w) / Double($1.width)).rounded()) } }
+        while height(width) > 30_000 && width > 400 { width = width * 3 / 4 }
+        let total = height(width)
+
+        guard width > 0, total > 0,
+              let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: width, height: total, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            throw ConvertError(L("These images are too large to stack", "Ảnh quá lớn, không ghép được"))
+        }
+        ctx.interpolationQuality = .high
+        var top = total
+        for img in images {
+            let h = Int((Double(img.height) * Double(width) / Double(img.width)).rounded())
+            top -= h
+            ctx.draw(img, in: CGRect(x: 0, y: top, width: width, height: h))
+        }
+        guard let result = ctx.makeImage() else { throw ConvertError(L("Couldn't save the image", "Không lưu được ảnh")) }
+
+        let allPNG = files.allSatisfy { normalizedExt($0) == "png" }
+        let dst = destination(for: files[0], ext: allPNG ? "png" : "jpg", suffix: L(" (stacked)", " (ghép)"))
+        try writeImage(result, to: dst, type: allPNG ? .png : .jpeg)
+        return dst
     }
 
     // MARK: - Văn bản (Word, RTF, TXT, HTML...)

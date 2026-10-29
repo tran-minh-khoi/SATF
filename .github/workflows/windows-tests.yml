@@ -1,0 +1,39 @@
+# Chạy các thao tác Edit của bản Windows (xoay, thu nhỏ, nén, ép dung lượng, xoá EXIF, ghép ảnh, PDF)
+# trên file thật, trên máy Windows của GitHub. Bản Mac chạy bằng scripts/test-mac.sh.
+name: Windows tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [Windows/**, tests/WindowsEditTests/**, .github/workflows/windows-tests.yml]
+
+jobs:
+  # Icon app (AppIcon.ico/png) không nằm trong git, build-win.sh tạo từ assets/logo.png bằng sips (chỉ có trên macOS)
+  icons:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: NO_INSTALLER=1 ./build-win.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: icons
+          path: |
+            Windows/AppIcon.ico
+            Windows/AppIcon.png
+
+  test:
+    needs: icons
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: icons
+          path: Windows
+      - run: dotnet run --project tests/WindowsEditTests -c Release

@@ -20,6 +20,8 @@ public static class UI
 {
     public static readonly Color Clipboard = Color.FromRgb(0x38, 0x8F, 0xFF);
     public static readonly Color Convert = Color.FromRgb(0xFF, 0x85, 0x29);
+    public static readonly Color Edit = Color.FromRgb(0x34, 0xC7, 0x7B);
+    public static readonly Color Donate = Color.FromRgb(0xE8, 0x50, 0x5B);
     public static readonly SolidColorBrush Panel = new(Color.FromArgb(0xF2, 0x24, 0x24, 0x2C));
     public static readonly SolidColorBrush PanelBorder = new(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF));
     public static readonly SolidColorBrush Secondary = new(Color.FromRgb(0xA8, 0xA8, 0xB3));

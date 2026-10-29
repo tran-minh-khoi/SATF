@@ -38,34 +38,32 @@ enum ModifierChoice: String, CaseIterable, Identifiable {
     }
 }
 
-enum Sensitivity: String, CaseIterable, Identifiable {
-    case easy, normal, hard
+/// Độ nhạy lắc: 1 = nhạy nhất (lắc nhẹ là mở menu), 10 = phải lắc mạnh. Cùng công thức với bản Windows.
+enum ShakeLevel {
+    static let range = 1...10
+    static let `default` = 5
+    /// Mỗi nhịp lắc phải đi xa tối thiểu (point): 20 … 56
+    static func minSwing(_ level: Int) -> CGFloat { CGFloat(20 + (level - 1) * 4) }
+    /// Số lần đổi chiều cần có
+    static func reversals(_ level: Int) -> Int { level <= 3 ? 3 : level <= 7 ? 4 : 5 }
+}
 
+/// Mức nén ảnh của nút "Nén ảnh"
+enum CompressLevel: String, CaseIterable, Identifiable {
+    case light, balanced, strong
     var id: String { rawValue }
-
     var label: String {
         switch self {
-        case .easy: return L("Easy", "Nhạy")
-        case .normal: return L("Normal", "Vừa")
-        case .hard: return L("Firm", "Khó")
+        case .light: return L("Light (best quality)", "Nhẹ (giữ nét nhất)")
+        case .balanced: return L("Balanced", "Cân bằng")
+        case .strong: return L("Strong (smallest)", "Mạnh (nhẹ nhất)")
         }
     }
-
-    /// Mỗi nhịp lắc phải đi xa tối thiểu (point)
-    var minSwing: CGFloat {
+    var quality: Double {
         switch self {
-        case .easy: return 25
-        case .normal: return 35
-        case .hard: return 50
-        }
-    }
-
-    /// Số lần đổi chiều cần có
-    var reversals: Int {
-        switch self {
-        case .easy: return 3
-        case .normal: return 4
-        case .hard: return 5
+        case .light: return 0.8
+        case .balanced: return 0.65
+        case .strong: return 0.45
         }
     }
 }
@@ -102,8 +100,8 @@ final class Settings: ObservableObject {
     @Published var shakeModifier: ModifierChoice {
         didSet { defaults.set(shakeModifier.rawValue, forKey: "shakeModifier") }
     }
-    @Published var sensitivity: Sensitivity {
-        didSet { defaults.set(sensitivity.rawValue, forKey: "sensitivity") }
+    @Published var shakeLevel: Int {
+        didSet { defaults.set(shakeLevel, forKey: "shakeLevel") }
     }
     @Published var hotKeyEnabled: Bool {
         didSet {
@@ -119,6 +117,21 @@ final class Settings: ObservableObject {
             HotKeyManager.shared.reload()
         }
     }
+    // Sửa ảnh
+    @Published var compressLevel: CompressLevel {
+        didSet { defaults.set(compressLevel.rawValue, forKey: "compressLevel") }
+    }
+    /// Dung lượng tối đa của nút "Dưới … MB", tính bằng KB
+    @Published var targetSizeKB: Int {
+        didSet { defaults.set(targetSizeKB, forKey: "targetSizeKB") }
+    }
+    /// Cạnh dài tối đa của nút "Thu nhỏ", tính bằng pixel
+    @Published var resizeEdge: Int {
+        didSet { defaults.set(resizeEdge, forKey: "resizeEdge") }
+    }
+    static let targetSizeChoices = [200, 500, 1000, 2000, 5000]
+    static let resizeEdgeChoices = [1080, 1280, 1920, 2560, 3840]
+
     /// Thông báo khi phím tắt không đăng ký được (trùng app khác)
     @Published var hotKeyError: String?
 
@@ -136,8 +149,20 @@ final class Settings: ObservableObject {
             shakeModifier = .shift
         }
 
-        sensitivity = Sensitivity(rawValue: defaults.string(forKey: "sensitivity") ?? "") ?? .normal
+        if let level = defaults.object(forKey: "shakeLevel") as? Int {
+            shakeLevel = min(max(level, ShakeLevel.range.lowerBound), ShakeLevel.range.upperBound)
+        } else {
+            // Bản cũ chỉ có 3 mức Nhạy / Vừa / Khó
+            switch defaults.string(forKey: "sensitivity") {
+            case "easy": shakeLevel = 2
+            case "hard": shakeLevel = 8
+            default: shakeLevel = ShakeLevel.default
+            }
+        }
         hotKeyEnabled = defaults.object(forKey: "hotKeyEnabled") as? Bool ?? true
+        compressLevel = CompressLevel(rawValue: defaults.string(forKey: "compressLevel") ?? "") ?? .balanced
+        targetSizeKB = defaults.object(forKey: "targetSizeKB") as? Int ?? 1000
+        resizeEdge = defaults.object(forKey: "resizeEdge") as? Int ?? 1920
 
         if let display = defaults.string(forKey: "hotKeyDisplay") {
             hotKey = HotKey(keyCode: UInt32(defaults.integer(forKey: "hotKeyCode")),
@@ -147,4 +172,9 @@ final class Settings: ObservableObject {
             hotKey = .default
         }
     }
+}
+
+/// 500 -> "500 KB", 1000 -> "1 MB"
+func sizeLabel(_ kb: Int) -> String {
+    kb >= 1000 ? "\(kb / 1000) MB" : "\(kb) KB"
 }
