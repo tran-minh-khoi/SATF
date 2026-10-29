@@ -32,6 +32,7 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 
 - 🎯 **Menu tròn ngay con trỏ:** bên phải là Chuyển đổi, bên trái là Copy và Khay.
 - 🔄 **Đổi ảnh, PDF, tài liệu, video, nhạc:** định dạng hay dùng đứng trước, còn lại rê vào *Thêm* là thấy.
+- 📚 **Nhiều file cùng lúc:** gộp thành **một PDF** (PDF, Word, Excel, PowerPoint, ảnh, văn bản, theo thứ tự bạn chọn file), hoặc nén chung vào **một file ZIP**. PDF nhiều trang cũng **tách** được thành mỗi trang một PDF.
 - 📦 **Giải nén** zip, rar, 7z, tar, gz, bz2, xz. Dùng được cả The Unarchiver, Keka, 7-Zip, WinRAR… nếu bạn thích.
 - 🗂️ **Khay:** gom file từ nhiều nơi rồi kéo ra dùng một lần.
 - 🪶 **Nhẹ:** gói nặng (LibreOffice, FFmpeg) chỉ tải khi cần, xoá được bất cứ lúc nào.
@@ -80,11 +81,12 @@ Không kéo file mà bấm phím tắt thì sẽ mở Khay.
 Xem bảng đầy đủ trong [README tiếng Anh](README.md#what-it-converts). Tóm tắt:
 
 - **Ảnh:** JPG, PNG, PDF, WebP, HEIC, GIF, TIFF, BMP (Mac có thêm AVIF, ICO).
-- **PDF:** sang ảnh (mỗi trang một ảnh), TXT (Mac), DOCX (Windows).
+- **PDF:** sang ảnh (mỗi trang một ảnh), TXT (Mac), DOCX (Windows), tách mỗi trang thành một PDF.
 - **Word, Excel, PowerPoint:** sang PDF, ảnh… (cần Microsoft Office hoặc gói Office).
 - **Video, nhạc:** MP4, MOV, M4A, WAV, AIFF (Mac); MP4, MP3, M4A, WAV (Windows, cần gói Video & nhạc).
 - **Tệp nén:** giải nén zip, rar, 7z, tar, gz, bz2, xz.
 - **Mọi file và thư mục:** nén ZIP.
+- **Nhiều file cùng lúc:** gộp thành một PDF (PDF, Word, Excel, PowerPoint, ảnh, văn bản), hoặc nén chung vào một file ZIP.
 
 ## Gói tải thêm
 

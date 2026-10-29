@@ -30,6 +30,8 @@ extension Format {
         case .m4a, .wav, .aiff: return "music.note"
         case .zip: return "doc.zipper"
         case .extract: return "archivebox"
+        case .mergePDF: return "square.stack.3d.up"
+        case .splitPDF: return "scissors"
         }
     }
 }
@@ -141,6 +143,9 @@ final class RadialModel: ObservableObject {
                 case .copy: return L("Copy file", "Copy file")
                 case .openShelf: return L("Keep on the shelf for later", "Cất vào khay để dùng sau")
                 case .convert(.extract): return L("Extract here", "Giải nén tại đây")
+                case .convert(.mergePDF): return L("Merge \(files.count) files into one PDF", "Gộp \(files.count) file thành một PDF")
+                case .convert(.splitPDF): return L("One PDF per page", "Tách mỗi trang thành một PDF")
+                case .convert(.zip) where files.count > 1: return L("Compress \(files.count) files into one ZIP", "Nén \(files.count) file thành một ZIP")
                 case .convert(let f): return L("Convert to \(f.label)", "Chuyển sang \(f.label)")
                 case .more: return L("See all formats", "Xem tất cả định dạng")
                 }
@@ -590,8 +595,8 @@ final class RadialMenuController {
                 close()
                 return
             }
-            // Thiếu gói: hỏi tải, tải xong tự chuyển tiếp
-            if OfficeAddOn.needed(for: files) {
+            // Thiếu gói: hỏi tải, tải xong tự chuyển tiếp (nén / giải nén / tách PDF không cần gói)
+            if ![Format.zip, .extract, .splitPDF].contains(format), OfficeAddOn.needed(for: files) {
                 close()
                 AddOnsWindowController.shared.show(.needed) {
                     Self.convert(files, to: format, showProgressAfter: 0)
@@ -614,8 +619,7 @@ final class RadialMenuController {
         let what = files.count == 1 ? files[0].lastPathComponent : L("\(files.count) files", "\(files.count) file")
         let slow = DispatchWorkItem {
             onSlow()
-            Toast.show(format == .extract ? L("Extracting…", "Đang giải nén…") : L("Converting to \(format.label)…", "Đang chuyển sang \(format.label)…"),
-                       what, style: .working, seconds: nil)
+            Toast.show(format.progressTitle, what, style: .working, seconds: nil)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: slow)
 

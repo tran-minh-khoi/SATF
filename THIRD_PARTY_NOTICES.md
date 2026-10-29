@@ -47,6 +47,12 @@ Used to read and save WebP images.
 - SkiaSharp — MIT License, Copyright (c) 2015–2016 Xamarin, Inc. and Copyright (c) 2017–2018 Microsoft Corporation. <https://github.com/mono/SkiaSharp>
 - Skia — BSD 3-Clause License, Copyright (c) 2011 Google Inc. <https://skia.org>
 
+### PDFsharp (Windows app)
+
+Used to merge PDFs and split them into pages.
+
+- PDFsharp — MIT License, Copyright (c) 2005–2025 empira Software GmbH, Troisdorf (Cologne Area), Germany. <https://github.com/empira/PDFsharp>
+
 ### .NET runtime (Windows app)
 
 MIT License, Copyright (c) .NET Foundation and Contributors. <https://github.com/dotnet/runtime>
