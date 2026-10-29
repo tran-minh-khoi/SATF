@@ -76,15 +76,31 @@ public class AppSettings
 
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
+    // Bản Store: Run key bị ảo hoá trong gói MSIX nên không có tác dụng, phải dùng StartupTask (khai báo trong AppxManifest.xml)
+    private const string StartupTaskId = "SATFStartup";
+
     public static bool LaunchAtStartup
     {
         get
         {
+            if (AppInfo.IsPackaged)
+            {
+                var task = Windows.ApplicationModel.StartupTask.GetAsync(StartupTaskId).AsTask().GetAwaiter().GetResult();
+                return task.State is Windows.ApplicationModel.StartupTaskState.Enabled or Windows.ApplicationModel.StartupTaskState.EnabledByPolicy;
+            }
             using var key = Registry.CurrentUser.OpenSubKey(RunKey);
             return key?.GetValue("SATF") != null;
         }
         set
         {
+            if (AppInfo.IsPackaged)
+            {
+                // Người dùng đã tắt trong Task Manager → Windows không cho app tự bật lại
+                var task = Windows.ApplicationModel.StartupTask.GetAsync(StartupTaskId).AsTask().GetAwaiter().GetResult();
+                if (value) task.RequestEnableAsync().AsTask().GetAwaiter().GetResult();
+                else task.Disable();
+                return;
+            }
             using var key = Registry.CurrentUser.CreateSubKey(RunKey);
             if (value) key.SetValue("SATF", $"\"{Environment.ProcessPath}\"");
             else key.DeleteValue("SATF", false);

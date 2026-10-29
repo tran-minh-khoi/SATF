@@ -126,7 +126,8 @@ public partial class App : System.Windows.Application
             L("SATF feature idea", "SATF - Góp ý tính năng"),
             L("I'd love SATF to…\n\n\nIt would help me because…\n", "Mình muốn SATF có thể…\n\n\nĐiều này giúp mình…\n"))));
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem(L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), null, (s, e) => Uninstall()));
+        if (!AppInfo.IsPackaged) // bản Store gỡ bằng Settings → Apps như mọi app Store khác
+            menu.Items.Add(new ToolStripMenuItem(L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), null, (s, e) => Uninstall()));
         menu.Items.Add(new ToolStripMenuItem(L("Quit SATF", "Thoát"), null, (s, e) => Shutdown()));
 
         return menu;
