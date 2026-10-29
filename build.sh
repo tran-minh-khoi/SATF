@@ -51,7 +51,7 @@ lipo -create -output "$BUNDLE/Contents/Resources/cwebp" "$CACHE/libwebp-$WEBP-ma
 # Có chứng chỉ "Developer ID Application" trong Keychain -> ký chuẩn để phát hành; chưa có thì ký ad-hoc (chỉ chạy thử)
 IDENTITY="$(security find-identity -v -p codesigning | grep -o '"Developer ID Application:[^"]*"' | head -1 | tr -d '"' || true)"
 if [ -n "$IDENTITY" ]; then
-  echo "▸ Ký bằng $IDENTITY…"
+  echo "▸ Ký bằng ${IDENTITY}…"
   codesign --force --options runtime --timestamp --sign "$IDENTITY" "$BUNDLE/Contents/Resources/cwebp"
   codesign --force --options runtime --timestamp --entitlements SATF.entitlements --sign "$IDENTITY" "$BUNDLE"
   codesign --verify --strict --deep "$BUNDLE"
