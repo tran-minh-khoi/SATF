@@ -139,22 +139,13 @@ Chi tiết xem [README tiếng Anh](README.md#build-from-source) và [CONTRIBUTI
 
 ## Ủng hộ SATF
 
-SATF miễn phí, mã nguồn mở và do một lập trình viên Việt Nam làm ra. Nếu app giúp bạn tiết kiệm thời gian, bạn có thể ủng hộ:
+SATF miễn phí, mã nguồn mở và do một lập trình viên Việt Nam làm ra. Nếu app giúp bạn tiết kiệm thời gian, mọi cách ủng hộ (**chuyển khoản VietQR, Ko-fi, PayPal hay GitHub**) đều ở một trang:
 
 <p align="center">
-  <a href="https://ko-fi.com/win070802"><img alt="Ủng hộ qua Ko-fi" src="https://img.shields.io/badge/Ko--fi-M%E1%BB%9Di%20c%C3%A0%20ph%C3%AA-29abe0?style=for-the-badge&logo=kofi&logoColor=white"></a>
-  <a href="https://paypal.me/tranminhkhoi070802"><img alt="Ủng hộ qua PayPal" src="https://img.shields.io/badge/PayPal-%E1%BB%A6ng%20h%E1%BB%99-0070ba?style=for-the-badge&logo=paypal&logoColor=white"></a>
-  <a href="https://mktechvn.com/vi/support"><img alt="Tất cả cách ủng hộ" src="https://img.shields.io/badge/T%E1%BA%A5t%20c%E1%BA%A3%20c%C3%A1ch%20%E1%BB%A7ng%20h%E1%BB%99-mktechvn.com-e8505b?style=for-the-badge"></a>
+  <a href="https://mktechvn.com/vi/support"><img alt="Ủng hộ SATF" src="https://img.shields.io/badge/%E2%99%A5%20%E1%BB%A6ng%20h%E1%BB%99%20SATF-mktechvn.com%2Fsupport-e8505b?style=for-the-badge"></a>
 </p>
 
-| | |
-|---|---|
-| 🏦 **Chuyển khoản** | MB Bank · `0335337802` · TRAN MINH KHOI, hoặc quét VietQR trên [trang ủng hộ](https://mktechvn.com/vi/support) |
-| ☕ **Ko-fi** | [ko-fi.com/win070802](https://ko-fi.com/win070802): thẻ hoặc PayPal, không cần tài khoản |
-| 💳 **PayPal** | [paypal.me/tranminhkhoi070802](https://paypal.me/tranminhkhoi070802) |
-| ⭐ **GitHub** | Tặng repo một ngôi sao: miễn phí và giúp nhiều người biết tới SATF hơn |
-
-Trong app, **Ủng hộ SATF…** (menu trên thanh menu / khay hệ thống) hiện mã QR mở [trang ủng hộ](https://mktechvn.com/vi/support). Muốn hợp tác, tài trợ tính năng hay đầu tư? Gửi thư tới [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev).
+Trong app, **Ủng hộ SATF…** (menu trên thanh menu / khay hệ thống) hiện mã QR mở đúng trang này. Tặng repo một ⭐ cũng là ủng hộ rất lớn. Muốn hợp tác, tài trợ tính năng hay đầu tư? Gửi thư tới [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev).
 
 ## Giấy phép
 

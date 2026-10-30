@@ -14,14 +14,11 @@ namespace SATF;
 /// Ko-fi, PayPal, GitHub và chuyển khoản trong nước ở cùng một chỗ.
 public static class Donate
 {
+    /// Mọi cách ủng hộ (Ko-fi, PayPal, GitHub, chuyển khoản) ở cùng một trang
     public const string SupportPage = "https://mktechvn.com/support";
-    public const string Kofi = "https://ko-fi.com/win070802";
-    public const string PayPal = "https://paypal.me/tranminhkhoi070802";
-    public const string Bank = "MB Bank";
-    public const string Account = "0335337802";
 }
 
-/// Cửa sổ "Ủng hộ SATF": logo, lời cảm ơn, mã QR tới trang ủng hộ, nút Ko-fi, PayPal, số tài khoản có nút copy.
+/// Cửa sổ "Ủng hộ SATF": logo, lời cảm ơn, mã QR và nút mở trang ủng hộ.
 public class DonateWindow : Window
 {
     private static DonateWindow? _open;
@@ -70,37 +67,11 @@ public class DonateWindow : Window
         RenderOptions.SetBitmapScalingMode(qr.Child, BitmapScalingMode.NearestNeighbor);   // QR phải sắc nét để quét
         root.Children.Add(qr);
 
-        root.Children.Add(new TextBlock { Text = L("Scan to support: Ko-fi, PayPal or bank transfer", "Quét để ủng hộ: Ko-fi, PayPal hoặc chuyển khoản"), FontSize = 11, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center });
+        root.Children.Add(new TextBlock { Text = L("Scan, or open the page: Ko-fi, PayPal or bank transfer", "Quét mã hoặc mở trang: Ko-fi, PayPal hay chuyển khoản"), FontSize = 11, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center });
 
-        var kofi = new Button { Content = L("☕  Buy me a coffee on Ko-fi", "☕  Mời mình ly cà phê qua Ko-fi"), Padding = new Thickness(10, 7, 10, 7), Margin = new Thickness(0, 12, 0, 0), IsDefault = true };
-        kofi.Click += (s, e) => OpenUrl(Donate.Kofi);
-        root.Children.Add(kofi);
-
-        var more = new TextBlock { Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Center, FontSize = 12 };
-        var paypal = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run("PayPal"));
-        paypal.Click += (s, e) => OpenUrl(Donate.PayPal);
-        var all = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(L("All ways to support", "Tất cả cách ủng hộ")));
-        all.Click += (s, e) => OpenUrl(Donate.SupportPage);
-        more.Inlines.Add(paypal);
-        more.Inlines.Add(new System.Windows.Documents.Run("   ·   ") { Foreground = Brushes.Gray });
-        more.Inlines.Add(all);
-        root.Children.Add(more);
-
-        // Trong nước: copy nhanh số tài khoản
-        var accountRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 10, 0, 0) };
-        accountRow.Children.Add(new TextBlock { Text = L("In Vietnam: ", "Trong nước: ") + $"{Donate.Bank} · {Donate.Account}", FontSize = 11, Foreground = Brushes.Gray, VerticalAlignment = VerticalAlignment.Center });
-        var copy = new Button { Content = "\uE8C8", FontFamily = UI.IconFont, FontSize = 10, Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(5, 2, 5, 2),
-                                Background = Brushes.Transparent, BorderThickness = new Thickness(0), Cursor = System.Windows.Input.Cursors.Hand, ToolTip = L("Copy account number", "Copy số tài khoản") };
-        copy.Click += (s, e) =>
-        {
-            System.Windows.Clipboard.SetText(Donate.Account);
-            copy.Content = "\uE73E";   // dấu ✓
-            var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
-            t.Tick += (_, _) => { t.Stop(); copy.Content = "\uE8C8"; };
-            t.Start();
-        };
-        accountRow.Children.Add(copy);
-        root.Children.Add(accountRow);
+        var open = new Button { Content = L("♥  Open the support page", "♥  Mở trang ủng hộ"), Padding = new Thickness(10, 7, 10, 7), Margin = new Thickness(0, 12, 0, 0), IsDefault = true };
+        open.Click += (s, e) => OpenUrl(Donate.SupportPage);
+        root.Children.Add(open);
 
         var star = new TextBlock { Margin = new Thickness(0, 14, 0, 0), HorizontalAlignment = HorizontalAlignment.Center, FontSize = 12 };
         var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(L("Or give SATF a star on GitHub", "Hoặc tặng SATF một ngôi sao trên GitHub")));
