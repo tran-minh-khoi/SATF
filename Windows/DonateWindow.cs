@@ -10,17 +10,18 @@ using Image = System.Windows.Controls.Image;
 
 namespace SATF;
 
-/// Thông tin ủng hộ (giống bản Mac). Mã VietQR (assets/donate-vietqr.png) tạo từ đúng tài khoản này.
+/// Thông tin ủng hộ (giống bản Mac). Mã QR (assets/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
+/// Ko-fi, PayPal, GitHub và chuyển khoản trong nước ở cùng một chỗ.
 public static class Donate
 {
+    public const string SupportPage = "https://mktechvn.com/support";
+    public const string Kofi = "https://ko-fi.com/win070802";
+    public const string PayPal = "https://paypal.me/tranminhkhoi070802";
     public const string Bank = "MB Bank";
     public const string Account = "0335337802";
-    public const string Owner = "Tran Minh Khoi";
-    /// Link ủng hộ quốc tế (Ko-fi, Buy Me a Coffee…). null = ẩn nút.
-    public static readonly string? InternationalUrl = null;
 }
 
-/// Cửa sổ "Ủng hộ SATF": logo, lời cảm ơn, mã VietQR, số tài khoản có nút copy.
+/// Cửa sổ "Ủng hộ SATF": logo, lời cảm ơn, mã QR tới trang ủng hộ, nút Ko-fi, PayPal, số tài khoản có nút copy.
 public class DonateWindow : Window
 {
     private static DonateWindow? _open;
@@ -64,34 +65,42 @@ public class DonateWindow : Window
             Background = Brushes.White, CornerRadius = new CornerRadius(14), Padding = new Thickness(12), Margin = new Thickness(0, 16, 0, 12),
             HorizontalAlignment = HorizontalAlignment.Center,
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 14, ShadowDepth = 3, Opacity = 0.18 },
-            Child = new Image { Source = LoadQr(), Width = 190, Height = 190 },
+            Child = new Image { Source = LoadQr(), Width = 170, Height = 170 },
         };
         RenderOptions.SetBitmapScalingMode(qr.Child, BitmapScalingMode.NearestNeighbor);   // QR phải sắc nét để quét
         root.Children.Add(qr);
 
-        root.Children.Add(new TextBlock { Text = L("Scan with any banking app (VietQR)", "Quét bằng app ngân hàng bất kỳ (VietQR)"), FontSize = 11, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center });
-        var accountRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 0) };
-        accountRow.Children.Add(new TextBlock { Text = $"{Donate.Bank} · {Donate.Account}", FontSize = 13, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
-        var copy = new Button { Content = "", FontFamily = UI.IconFont, FontSize = 11, Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(5, 2, 5, 2),
+        root.Children.Add(new TextBlock { Text = L("Scan to support: Ko-fi, PayPal or bank transfer", "Quét để ủng hộ: Ko-fi, PayPal hoặc chuyển khoản"), FontSize = 11, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center });
+
+        var kofi = new Button { Content = L("☕  Buy me a coffee on Ko-fi", "☕  Mời mình ly cà phê qua Ko-fi"), Padding = new Thickness(10, 7, 10, 7), Margin = new Thickness(0, 12, 0, 0), IsDefault = true };
+        kofi.Click += (s, e) => OpenUrl(Donate.Kofi);
+        root.Children.Add(kofi);
+
+        var more = new TextBlock { Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Center, FontSize = 12 };
+        var paypal = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run("PayPal"));
+        paypal.Click += (s, e) => OpenUrl(Donate.PayPal);
+        var all = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(L("All ways to support", "Tất cả cách ủng hộ")));
+        all.Click += (s, e) => OpenUrl(Donate.SupportPage);
+        more.Inlines.Add(paypal);
+        more.Inlines.Add(new System.Windows.Documents.Run("   ·   ") { Foreground = Brushes.Gray });
+        more.Inlines.Add(all);
+        root.Children.Add(more);
+
+        // Trong nước: copy nhanh số tài khoản
+        var accountRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 10, 0, 0) };
+        accountRow.Children.Add(new TextBlock { Text = L("In Vietnam: ", "Trong nước: ") + $"{Donate.Bank} · {Donate.Account}", FontSize = 11, Foreground = Brushes.Gray, VerticalAlignment = VerticalAlignment.Center });
+        var copy = new Button { Content = "\uE8C8", FontFamily = UI.IconFont, FontSize = 10, Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(5, 2, 5, 2),
                                 Background = Brushes.Transparent, BorderThickness = new Thickness(0), Cursor = System.Windows.Input.Cursors.Hand, ToolTip = L("Copy account number", "Copy số tài khoản") };
         copy.Click += (s, e) =>
         {
             System.Windows.Clipboard.SetText(Donate.Account);
-            copy.Content = "";   // dấu ✓
+            copy.Content = "\uE73E";   // dấu ✓
             var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
-            t.Tick += (_, _) => { t.Stop(); copy.Content = ""; };
+            t.Tick += (_, _) => { t.Stop(); copy.Content = "\uE8C8"; };
             t.Start();
         };
         accountRow.Children.Add(copy);
         root.Children.Add(accountRow);
-        root.Children.Add(new TextBlock { Text = Donate.Owner, FontSize = 11, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center });
-
-        if (Donate.InternationalUrl is string url)
-        {
-            var abroad = new Button { Content = L("Support from abroad", "Ủng hộ từ nước ngoài"), Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 14, 0, 0) };
-            abroad.Click += (s, e) => OpenUrl(url);
-            root.Children.Add(abroad);
-        }
 
         var star = new TextBlock { Margin = new Thickness(0, 14, 0, 0), HorizontalAlignment = HorizontalAlignment.Center, FontSize = 12 };
         var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(L("Or give SATF a star on GitHub", "Hoặc tặng SATF một ngôi sao trên GitHub")));
@@ -121,7 +130,7 @@ public class DonateWindow : Window
     {
         try
         {
-            var img = new BitmapImage(new Uri("pack://application:,,,/donate-vietqr.png"));
+            var img = new BitmapImage(new Uri("pack://application:,,,/donate-qr.png"));
             img.Freeze();
             return img;
         }

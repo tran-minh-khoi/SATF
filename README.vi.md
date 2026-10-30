@@ -60,8 +60,8 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 
 | Hệ điều hành | Tải về | Yêu cầu |
 |---|---|---|
-| **macOS** | [SATF-1.2.1.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
-| **Windows** | [SATF-Setup-1.2.1.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
+| **macOS** | [SATF-1.2.2.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
+| **Windows** | [SATF-Setup-1.2.2.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
 
 **macOS:** mở DMG, kéo SATF vào Applications rồi mở là chạy (app đã được Apple ký và kiểm tra).
 
@@ -139,9 +139,22 @@ Chi tiết xem [README tiếng Anh](README.md#build-from-source) và [CONTRIBUTI
 
 ## Ủng hộ SATF
 
-SATF miễn phí và mã nguồn mở. Nếu app giúp bạn tiết kiệm thời gian, bạn có thể mời mình một ly cà phê: quét mã VietQR bên dưới bằng app ngân hàng bất kỳ, hoặc mở **Ủng hộ SATF…** trong menu của app. Tặng một ⭐ trên GitHub cũng là ủng hộ rất lớn.
+SATF miễn phí, mã nguồn mở và do một lập trình viên Việt Nam làm ra. Nếu app giúp bạn tiết kiệm thời gian, bạn có thể ủng hộ:
 
-<p align="center"><img src="docs/images/donate.jpg" alt="Cửa sổ Ủng hộ SATF" width="300"></p>
+<p align="center">
+  <a href="https://ko-fi.com/win070802"><img alt="Ủng hộ qua Ko-fi" src="https://img.shields.io/badge/Ko--fi-M%E1%BB%9Di%20c%C3%A0%20ph%C3%AA-29abe0?style=for-the-badge&logo=kofi&logoColor=white"></a>
+  <a href="https://paypal.me/tranminhkhoi070802"><img alt="Ủng hộ qua PayPal" src="https://img.shields.io/badge/PayPal-%E1%BB%A6ng%20h%E1%BB%99-0070ba?style=for-the-badge&logo=paypal&logoColor=white"></a>
+  <a href="https://mktechvn.com/vi/support"><img alt="Tất cả cách ủng hộ" src="https://img.shields.io/badge/T%E1%BA%A5t%20c%E1%BA%A3%20c%C3%A1ch%20%E1%BB%A7ng%20h%E1%BB%99-mktechvn.com-e8505b?style=for-the-badge"></a>
+</p>
+
+| | |
+|---|---|
+| 🏦 **Chuyển khoản** | MB Bank · `0335337802` · TRAN MINH KHOI, hoặc quét VietQR trên [trang ủng hộ](https://mktechvn.com/vi/support) |
+| ☕ **Ko-fi** | [ko-fi.com/win070802](https://ko-fi.com/win070802): thẻ hoặc PayPal, không cần tài khoản |
+| 💳 **PayPal** | [paypal.me/tranminhkhoi070802](https://paypal.me/tranminhkhoi070802) |
+| ⭐ **GitHub** | Tặng repo một ngôi sao: miễn phí và giúp nhiều người biết tới SATF hơn |
+
+Trong app, **Ủng hộ SATF…** (menu trên thanh menu / khay hệ thống) hiện mã QR mở [trang ủng hộ](https://mktechvn.com/vi/support). Muốn hợp tác, tài trợ tính năng hay đầu tư? Gửi thư tới [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev).
 
 ## Giấy phép
 

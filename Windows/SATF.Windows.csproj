@@ -17,7 +17,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
     <!-- Thông tin hiện trong Properties → Details của SATF.exe -->
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
     <Product>SATF</Product>
     <AssemblyTitle>SATF</AssemblyTitle>
     <Description>SATF – Kéo, lắc, đổi file</Description>
@@ -35,6 +35,6 @@
 
   <ItemGroup>
     <Resource Include="AppIcon.png" />
-    <Resource Include="..\assets\donate-vietqr.png" Link="donate-vietqr.png" />
+    <Resource Include="..\assets\donate-qr.png" Link="donate-qr.png" />
   </ItemGroup>
 </Project>

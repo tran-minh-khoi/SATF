@@ -45,7 +45,7 @@ for A in arm64 x86-64; do
   [ -f "$TGZ" ] || curl -fsSL "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-$WEBP-mac-$A.tar.gz" -o "$TGZ"
   tar -xzf "$TGZ" -C "$CACHE" "libwebp-$WEBP-mac-$A/bin/cwebp"
 done
-cp THIRD_PARTY_NOTICES.md LICENSE assets/donate-vietqr.png "$BUNDLE/Contents/Resources/"
+cp THIRD_PARTY_NOTICES.md LICENSE assets/donate-qr.png "$BUNDLE/Contents/Resources/"
 lipo -create -output "$BUNDLE/Contents/Resources/cwebp" "$CACHE/libwebp-$WEBP-mac-arm64/bin/cwebp" "$CACHE/libwebp-$WEBP-mac-x86-64/bin/cwebp"
 
 # Có chứng chỉ "Developer ID Application" trong Keychain -> ký chuẩn để phát hành; chưa có thì ký ad-hoc (chỉ chạy thử)
