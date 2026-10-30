@@ -16,6 +16,15 @@
 </p>
 
 <p align="center">
+  <a href="https://www.producthunt.com/products/satf?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-satf">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1297383&theme=dark">
+      <img alt="SATF - Drag, shake, convert files on macOS &amp; Windows | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1297383&theme=light">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
   <a href="https://mktechvn.com/en/satf"><b>Website</b></a> ·
   <a href="#download">Download</a> ·
   <a href="#how-it-works">How it works</a> ·
