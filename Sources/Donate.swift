@@ -1,13 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// Thông tin ủng hộ. Mã VietQR (assets/donate-vietqr.png) tạo từ đúng tài khoản này.
+/// Thông tin ủng hộ. Mã QR (assets/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
+/// Ko-fi, PayPal, GitHub và chuyển khoản trong nước ở cùng một chỗ.
 enum Donate {
+    static let supportPage = URL(string: "https://mktechvn.com/support")!
+    static let kofi = URL(string: "https://ko-fi.com/win070802")!
+    static let paypal = URL(string: "https://paypal.me/tranminhkhoi070802")!
     static let bank = "MB Bank"
     static let account = "0335337802"
-    static let owner = "Tran Minh Khoi"
-    /// Link ủng hộ quốc tế (Ko-fi, Buy Me a Coffee…). nil = ẩn tab Quốc tế.
-    static let internationalURL: URL? = nil
 }
 
 final class DonateWindowController {
@@ -22,7 +23,9 @@ final class DonateWindowController {
             w.titleVisibility = .hidden
             w.isMovableByWindowBackground = true
             w.isReleasedWhenClosed = false
-            w.contentView = NSHostingView(rootView: DonateView())
+            let host = NSHostingView(rootView: DonateView())
+            w.contentView = host
+            w.setContentSize(host.fittingSize)   // vừa khít nội dung
             w.center()
             window = w
         }
@@ -38,7 +41,7 @@ struct DonateView: View {
     @State private var beat = false
 
     private var qr: NSImage? {
-        Bundle.main.url(forResource: "donate-vietqr", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+        Bundle.main.url(forResource: "donate-qr", withExtension: "png").flatMap(NSImage.init(contentsOf:))
     }
 
     var body: some View {
@@ -70,7 +73,7 @@ struct DonateView: View {
                 Image(nsImage: qr)
                     .interpolation(.none)   // QR phải sắc nét để quét
                     .resizable()
-                    .frame(width: 190, height: 190)
+                    .frame(width: 170, height: 170)
                     .padding(12)
                     .background(Color.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
@@ -78,30 +81,37 @@ struct DonateView: View {
                     .offset(y: appeared ? 0 : 12)
             }
 
-            VStack(spacing: 2) {
-                Text(L("Scan with any banking app (VietQR)", "Quét bằng app ngân hàng bất kỳ (VietQR)"))
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
-                HStack(spacing: 6) {
-                    Text("\(Donate.bank) · \(Donate.account)").font(.system(size: 13, weight: .semibold, design: .rounded))
-                    Button {
-                        Clipboard.copyText(Donate.account)
-                        withAnimation { copied = true }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { copied = false } }
-                    } label: {
-                        Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 11, weight: .semibold))
-                    }
-                    .buttonStyle(.borderless)
-                    .help(L("Copy account number", "Copy số tài khoản"))
-                }
-                Text(Donate.owner).font(.system(size: 11)).foregroundStyle(.secondary)
-            }
+            Text(L("Scan to support: Ko-fi, PayPal or bank transfer", "Quét để ủng hộ: Ko-fi, PayPal hoặc chuyển khoản"))
+                .font(.system(size: 11)).foregroundStyle(.secondary)
 
-            if let url = Donate.internationalURL {
-                Button { NSWorkspace.shared.open(url) } label: {
-                    Label(L("Support from abroad", "Ủng hộ từ nước ngoài"), systemImage: "globe")
-                        .frame(maxWidth: .infinity)
+            Button { NSWorkspace.shared.open(Donate.kofi) } label: {
+                Label(L("Buy me a coffee on Ko-fi", "Mời mình ly cà phê qua Ko-fi"), systemImage: "cup.and.saucer.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
+
+            HStack(spacing: 14) {
+                Button("PayPal") { NSWorkspace.shared.open(Donate.paypal) }
+                Text("·").foregroundStyle(.tertiary)
+                Button(L("All ways to support", "Tất cả cách ủng hộ")) { NSWorkspace.shared.open(Donate.supportPage) }
+            }
+            .buttonStyle(.link)
+            .font(.system(size: 12))
+
+            // Trong nước: copy nhanh số tài khoản
+            HStack(spacing: 6) {
+                Text(L("In Vietnam: ", "Trong nước: ") + "\(Donate.bank) · \(Donate.account)")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                Button {
+                    Clipboard.copyText(Donate.account)
+                    withAnimation { copied = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { copied = false } }
+                } label: {
+                    Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 10, weight: .semibold))
                 }
-                .controlSize(.large)
+                .buttonStyle(.borderless)
+                .help(L("Copy account number", "Copy số tài khoản"))
             }
 
             Button { NSWorkspace.shared.open(URL(string: "https://github.com/tran-minh-khoi/SATF")!) } label: {

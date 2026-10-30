@@ -11,7 +11,7 @@ mkdir -p "$TMP/samples" docs/images
 cp assets/logo.png "$TMP/samples/Vacation photo.png"
 cp assets/logo.png "$TMP/samples/Screenshot.png"
 sips -s format jpeg assets/logo.png --out "$TMP/samples/Beach day.jpg" >/dev/null
-cp assets/donate-vietqr.png "$TMP/"   # cửa sổ Ủng hộ đọc mã QR cạnh chương trình chụp
+cp assets/donate-qr.png "$TMP/"   # cửa sổ Ủng hộ đọc mã QR cạnh chương trình chụp
 for f in "Report Q3.docx" "Budget 2026.xlsx" "Pitch deck.pptx" "Holiday.zip"; do printf 'x' > "$TMP/samples/$f"; done
 
 cp scripts/screenshots.swift "$TMP/main.swift"   # Swift chỉ chạy code trực tiếp trong main.swift

@@ -68,8 +68,8 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 | Platform | Download | Requirements |
 |---|---|---|
-| **macOS** | [SATF-1.2.1.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
-| **Windows** | [SATF-Setup-1.2.1.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
+| **macOS** | [SATF-1.2.2.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
+| **Windows** | [SATF-Setup-1.2.2.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
 
 All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/releases).
 
@@ -269,9 +269,22 @@ Pull requests, translations and ideas are welcome. Please read [CONTRIBUTING.md]
 
 ## Support SATF
 
-SATF is free and open source. If it saves you time, you can buy me a coffee. Scan the VietQR code below with any Vietnamese banking app, or open **Support SATF…** from the menu bar / tray menu. A ⭐ on GitHub helps a lot too.
+SATF is free, open source and made by one developer in Vietnam. If it saves you time, you can help keep it going:
 
-<p align="center"><img src="docs/images/donate.jpg" alt="Support SATF window" width="300"></p>
+<p align="center">
+  <a href="https://ko-fi.com/win070802"><img alt="Support me on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-29abe0?style=for-the-badge&logo=kofi&logoColor=white"></a>
+  <a href="https://paypal.me/tranminhkhoi070802"><img alt="Donate with PayPal" src="https://img.shields.io/badge/PayPal-Donate-0070ba?style=for-the-badge&logo=paypal&logoColor=white"></a>
+  <a href="https://mktechvn.com/en/support"><img alt="All ways to support" src="https://img.shields.io/badge/All%20ways%20to%20support-mktechvn.com-e8505b?style=for-the-badge"></a>
+</p>
+
+| | |
+|---|---|
+| ☕ **Ko-fi** | [ko-fi.com/win070802](https://ko-fi.com/win070802): card or PayPal, no account needed |
+| 💳 **PayPal** | [paypal.me/tranminhkhoi070802](https://paypal.me/tranminhkhoi070802) |
+| 🏦 **Bank transfer (Vietnam)** | MB Bank · `0335337802` · TRAN MINH KHOI, or scan the VietQR on the [support page](https://mktechvn.com/vi/support) |
+| ⭐ **GitHub** | Star this repo: it's free and helps other people find SATF |
+
+In the app, **Support SATF…** (menu bar / tray menu) shows a QR code to the [support page](https://mktechvn.com/en/support). Interested in partnering, sponsoring a feature or investing? Email [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev).
 
 ## License
 
