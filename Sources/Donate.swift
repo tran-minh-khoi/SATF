@@ -4,11 +4,8 @@ import SwiftUI
 /// Thông tin ủng hộ. Mã QR (assets/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
 /// Ko-fi, PayPal, GitHub và chuyển khoản trong nước ở cùng một chỗ.
 enum Donate {
+    /// Mọi cách ủng hộ (Ko-fi, PayPal, GitHub, chuyển khoản) ở cùng một trang
     static let supportPage = URL(string: "https://mktechvn.com/support")!
-    static let kofi = URL(string: "https://ko-fi.com/win070802")!
-    static let paypal = URL(string: "https://paypal.me/tranminhkhoi070802")!
-    static let bank = "MB Bank"
-    static let account = "0335337802"
 }
 
 final class DonateWindowController {
@@ -37,7 +34,6 @@ final class DonateWindowController {
 struct DonateView: View {
     @ObservedObject private var settings = Settings.shared
     @State private var appeared = false
-    @State private var copied = false
     @State private var beat = false
 
     private var qr: NSImage? {
@@ -81,38 +77,16 @@ struct DonateView: View {
                     .offset(y: appeared ? 0 : 12)
             }
 
-            Text(L("Scan to support: Ko-fi, PayPal or bank transfer", "Quét để ủng hộ: Ko-fi, PayPal hoặc chuyển khoản"))
+            Text(L("Scan, or open the page: Ko-fi, PayPal or bank transfer", "Quét mã hoặc mở trang: Ko-fi, PayPal hay chuyển khoản"))
                 .font(.system(size: 11)).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
 
-            Button { NSWorkspace.shared.open(Donate.kofi) } label: {
-                Label(L("Buy me a coffee on Ko-fi", "Mời mình ly cà phê qua Ko-fi"), systemImage: "cup.and.saucer.fill")
+            Button { NSWorkspace.shared.open(Donate.supportPage) } label: {
+                Label(L("Open the support page", "Mở trang ủng hộ"), systemImage: "heart.fill")
                     .frame(maxWidth: .infinity)
             }
             .controlSize(.large)
             .keyboardShortcut(.defaultAction)
-
-            HStack(spacing: 14) {
-                Button("PayPal") { NSWorkspace.shared.open(Donate.paypal) }
-                Text("·").foregroundStyle(.tertiary)
-                Button(L("All ways to support", "Tất cả cách ủng hộ")) { NSWorkspace.shared.open(Donate.supportPage) }
-            }
-            .buttonStyle(.link)
-            .font(.system(size: 12))
-
-            // Trong nước: copy nhanh số tài khoản
-            HStack(spacing: 6) {
-                Text(L("In Vietnam: ", "Trong nước: ") + "\(Donate.bank) · \(Donate.account)")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
-                Button {
-                    Clipboard.copyText(Donate.account)
-                    withAnimation { copied = true }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { copied = false } }
-                } label: {
-                    Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 10, weight: .semibold))
-                }
-                .buttonStyle(.borderless)
-                .help(L("Copy account number", "Copy số tài khoản"))
-            }
 
             Button { NSWorkspace.shared.open(URL(string: "https://github.com/tran-minh-khoi/SATF")!) } label: {
                 Label(L("Or give SATF a star on GitHub", "Hoặc tặng SATF một ngôi sao trên GitHub"), systemImage: "star")

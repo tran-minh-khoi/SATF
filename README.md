@@ -269,22 +269,13 @@ Pull requests, translations and ideas are welcome. Please read [CONTRIBUTING.md]
 
 ## Support SATF
 
-SATF is free, open source and made by one developer in Vietnam. If it saves you time, you can help keep it going:
+SATF is free, open source and made by one developer in Vietnam. If it saves you time, every way to support it (**Ko-fi, PayPal, GitHub or bank transfer in Vietnam**) is on one page:
 
 <p align="center">
-  <a href="https://ko-fi.com/win070802"><img alt="Support me on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-29abe0?style=for-the-badge&logo=kofi&logoColor=white"></a>
-  <a href="https://paypal.me/tranminhkhoi070802"><img alt="Donate with PayPal" src="https://img.shields.io/badge/PayPal-Donate-0070ba?style=for-the-badge&logo=paypal&logoColor=white"></a>
-  <a href="https://mktechvn.com/en/support"><img alt="All ways to support" src="https://img.shields.io/badge/All%20ways%20to%20support-mktechvn.com-e8505b?style=for-the-badge"></a>
+  <a href="https://mktechvn.com/en/support"><img alt="Support SATF" src="https://img.shields.io/badge/%E2%99%A5%20Support%20SATF-mktechvn.com%2Fsupport-e8505b?style=for-the-badge"></a>
 </p>
 
-| | |
-|---|---|
-| ☕ **Ko-fi** | [ko-fi.com/win070802](https://ko-fi.com/win070802): card or PayPal, no account needed |
-| 💳 **PayPal** | [paypal.me/tranminhkhoi070802](https://paypal.me/tranminhkhoi070802) |
-| 🏦 **Bank transfer (Vietnam)** | MB Bank · `0335337802` · TRAN MINH KHOI, or scan the VietQR on the [support page](https://mktechvn.com/vi/support) |
-| ⭐ **GitHub** | Star this repo: it's free and helps other people find SATF |
-
-In the app, **Support SATF…** (menu bar / tray menu) shows a QR code to the [support page](https://mktechvn.com/en/support). Interested in partnering, sponsoring a feature or investing? Email [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev).
+In the app, **Support SATF…** (menu bar / tray menu) shows a QR code to the same page. A ⭐ on this repo helps a lot too. Interested in partnering, sponsoring a feature or investing? Email [contact@tranminhkhoi.dev](mailto:contact@tranminhkhoi.dev).
 
 ## License
 

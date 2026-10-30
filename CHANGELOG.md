@@ -5,7 +5,7 @@ All notable changes to SATF are listed here. Versions follow [Semantic Versionin
 ## [1.2.2] — 2026-10-30
 
 ### Changed
-- **Support SATF** window: the QR code now opens [mktechvn.com/support](https://mktechvn.com/support), which lists Ko-fi, PayPal, GitHub and bank transfer in Vietnam. New **Ko-fi** button, plus links to PayPal and the support page. The Vietnamese bank account is still one click to copy.
+- **Support SATF** window: the QR code and the new **Open the support page** button lead to [mktechvn.com/support](https://mktechvn.com/support), where every way to support SATF is in one place: Ko-fi, PayPal, GitHub and bank transfer in Vietnam (VietQR).
 
 ## [1.2.1] — 2026-10-29
 
