@@ -14,6 +14,15 @@
   <a href="LICENSE"><img alt="Giấy phép MIT" src="https://img.shields.io/badge/license-MIT-555?style=for-the-badge"></a>
 </p>
 
+<p align="center">
+  <a href="https://www.producthunt.com/products/satf?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-satf">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1297383&theme=dark">
+      <img alt="SATF - Drag, shake, convert files on macOS &amp; Windows | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1297383&theme=light">
+    </picture>
+  </a>
+</p>
+
 <p align="center"><a href="https://mktechvn.com/vi/satf"><b>Trang web</b></a> · <a href="README.md">English</a></p>
 
 <p align="center">
