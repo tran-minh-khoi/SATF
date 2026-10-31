@@ -21,6 +21,7 @@
       <img alt="SATF - Drag, shake, convert files on macOS &amp; Windows | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1297383&theme=light">
     </picture>
   </a>
+  <a href="https://launchstag.com/p/satf"><img alt="Featured on Launchstag" width="198" height="62" src="https://launchstag.com/badge-light.svg"></a>
 </p>
 
 <p align="center"><a href="https://mktechvn.com/vi/satf"><b>Trang web</b></a> · <a href="README.md">English</a></p>
