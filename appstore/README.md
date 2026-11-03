@@ -30,8 +30,10 @@ Code riêng nằm trong các khối `#if APPSTORE` (AppDelegate, SettingsWindow,
 ```
 Tải lên bằng app **Transporter** (Mac App Store, miễn phí): kéo file `.pkg` vào → Deliver.
 Hoặc tự động bằng khoá API App Store Connect (Users and Access → Integrations → App Store Connect API):
+copy `appstore/upload.env.example` thành `appstore/upload.env`, điền Key ID + Issuer ID, đặt file `AuthKey_<KEY_ID>.p8`
+vào `~/.appstoreconnect/private_keys/`, rồi:
 ```bash
-UPLOAD=1 ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-xxxx-… ./build-appstore.sh
+UPLOAD=1 ./build-appstore.sh
 ```
 Số build (`CFBundleVersion`) = số commit nên luôn tăng; muốn đặt tay: `BUILD_NUMBER=42 ./build-appstore.sh`.
 

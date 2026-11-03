@@ -16,3 +16,6 @@ tests/WindowsEditTests/obj/
 
 # Mac App Store: provisioning profile tải từ developer.apple.com (không đưa lên git)
 appstore/embedded.provisionprofile
+
+# Khoá API App Store Connect
+appstore/upload.env

@@ -13,6 +13,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Khoá API App Store Connect để tự tải lên (không đưa lên git): appstore/upload.env, mẫu ở appstore/upload.env.example
+[ -f appstore/upload.env ] && source appstore/upload.env
+
 APP=SATF
 OUT=build/appstore
 BUNDLE="$OUT/$APP.app"
