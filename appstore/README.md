@@ -52,4 +52,4 @@ Nội dung soạn sẵn trong `appstore/metadata/`:
 - `review_notes.txt`: ghi chú cho người duyệt (cách mở menu bằng cách lắc)
 - `app_info.txt`: danh mục, độ tuổi, quyền riêng tư (Data Not Collected), mã hoá, URL
 
-Còn thiếu: **Privacy Policy URL** (bắt buộc) — điền khi trang trên website sẵn sàng.
+Trang chính sách & hỗ trợ nằm trên website (repo mk-widget-card-website): `/satf/privacy`, `/satf/support`.

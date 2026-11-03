@@ -5,9 +5,9 @@ Secondary category:    Productivity
 Price:                 (chọn trong App Store Connect)
 Age rating:            4+ (trả lời "None" cho mọi mục)
 Copyright:             2026 Tran Minh Khoi
-Support URL:           https://tranminhkhoi.dev            (đổi nếu có trang hỗ trợ riêng)
-Marketing URL:         https://tranminhkhoi.dev
-Privacy Policy URL:    (bắt buộc, điền khi có trang trên website)
+Support URL:           https://mktechvn.com/en/satf/support   (Vietnamese: https://mktechvn.com/vi/satf/support)
+Marketing URL:         https://mktechvn.com/en/satf           (Vietnamese: https://mktechvn.com/vi/satf)
+Privacy Policy URL:    https://mktechvn.com/en/satf/privacy   (Vietnamese: https://mktechvn.com/vi/satf/privacy)
 App Privacy:           Data Not Collected
 Encryption:            Không (ITSAppUsesNonExemptEncryption = NO đã có trong Info.plist)
 Contact (App Review):  contact@tranminhkhoi.dev
