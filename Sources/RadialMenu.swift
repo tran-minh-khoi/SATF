@@ -339,22 +339,6 @@ struct RingSegment: Shape {
 
 private enum SegmentState { case normal, active, hovered, disabled }
 
-/// Gom các mảnh Liquid Glass để macOS 26 vẽ chung một lượt (nhẹ hơn nhiều so với từng mảnh riêng)
-private struct GlassGroup<Content: View>: View {
-    @ViewBuilder var content: Content
-    var body: some View {
-        #if compiler(>=6.2)
-        if #available(macOS 26.0, *), !RadialStyle.simulatedGlass {
-            GlassEffectContainer(spacing: 0) { content }
-        } else {
-            content
-        }
-        #else
-        content
-        #endif
-    }
-}
-
 enum RadialStyle {
     /// true: luôn vẽ kính giả lập. Ảnh chụp bằng cacheDisplay (scripts/screenshots.sh) không bắt được Liquid Glass thật của macOS 26.
     static var simulatedGlass = false
@@ -427,7 +411,7 @@ struct RadialMenuView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            GlassGroup { ZStack {
+            ZStack {
                 if let open = model.expanded, open != .clipboard {
                     outerRing(open)
                         .id("\(open)-\(model.showAll)")   // đổi bố cục -> chạy lại hiệu ứng bung
@@ -437,7 +421,7 @@ struct RadialMenuView: View {
                 clipboardSegment(model.clipboardItems[1], range: (180, 270))   // Khay ở trên
                 innerHalf(.convert)   // trên
                 innerHalf(.edit)      // dưới
-            } }
+            }
             .opacity(model.status == .idle ? 1 : 0.3)
 
             centerDisc
