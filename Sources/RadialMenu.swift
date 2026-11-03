@@ -339,6 +339,22 @@ struct RingSegment: Shape {
 
 private enum SegmentState { case normal, active, hovered, disabled }
 
+/// Gom các mảnh Liquid Glass để macOS 26 vẽ chung một lượt (nhẹ hơn nhiều so với từng mảnh riêng)
+private struct GlassGroup<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        #if compiler(>=6.2)
+        if #available(macOS 26.0, *), !RadialStyle.simulatedGlass {
+            GlassEffectContainer(spacing: 0) { content }
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}
+
 enum RadialStyle {
     /// true: luôn vẽ kính giả lập. Ảnh chụp bằng cacheDisplay (scripts/screenshots.sh) không bắt được Liquid Glass thật của macOS 26.
     static var simulatedGlass = false
@@ -390,9 +406,8 @@ private struct GlassSurface<S: Shape>: View {
             // Ánh sáng từ góc trên-trái: mặt kính sáng hơn ở phía trên
             shape.fill(LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.03), .clear],
                                       startPoint: .topLeading, endPoint: .bottomTrailing))
-            // Độ dày của kính: quầng sáng mờ chạy dọc mép trong
-            shape.stroke(Color.white.opacity(state == .hovered ? 0.42 : 0.2), lineWidth: 8)
-                .blur(radius: 5)
+            // Độ dày của kính: dải sáng mảnh chạy dọc mép trong (không dùng blur cho nhẹ)
+            shape.stroke(Color.white.opacity(0.14), lineWidth: 5)
                 .clipShape(shape)
             // Mép kính: sáng ở cạnh hướng về nguồn sáng, mờ dần ở cạnh đối diện
             shape.stroke(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.2), .white.opacity(0.05), .white.opacity(0.4)],
@@ -412,7 +427,7 @@ struct RadialMenuView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ZStack {
+            GlassGroup { ZStack {
                 if let open = model.expanded, open != .clipboard {
                     outerRing(open)
                         .id("\(open)-\(model.showAll)")   // đổi bố cục -> chạy lại hiệu ứng bung
@@ -422,7 +437,7 @@ struct RadialMenuView: View {
                 clipboardSegment(model.clipboardItems[1], range: (180, 270))   // Khay ở trên
                 innerHalf(.convert)   // trên
                 innerHalf(.edit)      // dưới
-            }
+            } }
             .opacity(model.status == .idle ? 1 : 0.3)
 
             centerDisc
@@ -497,55 +512,52 @@ struct RadialMenuView: View {
         let shape = RingSegment(start: range.0, end: range.1, inner: inner, outer: outer, center: RadialGeo.center)
         let mid = (range.0 + range.1) / 2 * .pi / 180
         let hovered = state == .hovered
-        let push: CGFloat = hovered ? 10 : 0
+        let push: CGFloat = hovered ? 9 : 0
         let labelPoint = RadialGeo.point(angleRad: mid, radius: (inner + outer) / 2)
         // Phóng to quanh tâm của chính ô đó (không phải tâm vòng tròn)
         let anchor = UnitPoint(x: labelPoint.x / RadialGeo.size.width, y: labelPoint.y / RadialGeo.size.height)
         let labelColor: Color = hovered ? .white : (state == .disabled ? .secondary : .primary)
-        // Đang trỏ vào một ô khác: các ô còn lại lùi lại một chút cho ô được chọn nổi bật
-        let dimmed = !hovered && model.hoveredItem != nil && state != .active
 
         return ZStack {
-            GlassSurface(shape: shape, tint: tint, state: state)
-            // Màu phủ khi đang mở / đang trỏ vào: vẽ riêng trên mặt kính để luôn thấy rõ,
-            // kể cả với Liquid Glass của macOS 26 (màu nhuộm của kính hệ thống rất nhạt)
-            if state == .active {
-                shape.fill(tint.opacity(0.22))
+            // Mặt kính đứng yên (không phóng to, không đổi màu theo hover): kính phải tính lại nền phía sau
+            // mỗi khi biến đổi, nên để yên thì hover mới mượt
+            GlassSurface(shape: shape, tint: tint, state: hovered ? .active : state)
+            if state == .active || hovered {
+                shape.fill(tint.opacity(0.2))
             }
-            if hovered {
-                shape.fill(LinearGradient(colors: [tint.opacity(0.98), tint.opacity(0.78)], startPoint: .top, endPoint: .bottom))
-                    .overlay(shape.fill(LinearGradient(colors: [.white.opacity(0.35), .clear],
-                                                       startPoint: .top, endPoint: .center)))
-                    .overlay(shape.stroke(Color.white.opacity(0.75), lineWidth: 1.3))
-                    .shadow(color: tint.opacity(0.65), radius: 18, y: 4)
-                    .transition(.opacity)
-            }
-            VStack(spacing: 3) {
-                if let icon {
-                    Image(nsImage: icon)
-                        .renderingMode(icon.isTemplate ? .template : .original)
-                        .resizable()
-                        .interpolation(.high)
-                        .scaledToFit()
-                        .frame(width: 26, height: 26)
-                        .shadow(color: .black.opacity(hovered ? 0.3 : 0.15), radius: 2, y: 1)
-                } else if !symbol.isEmpty {
-                    Image(systemName: symbol)
-                        .font(.system(size: big ? 19 : 15, weight: .semibold))
+            // Lớp nổi lên khi trỏ vào: màu của nhóm + chữ, phóng to và bật ra ngoài
+            ZStack {
+                if hovered {
+                    shape.fill(LinearGradient(colors: [tint, tint.opacity(0.8)], startPoint: .top, endPoint: .bottom))
+                        .overlay(shape.fill(LinearGradient(colors: [.white.opacity(0.32), .clear],
+                                                           startPoint: .top, endPoint: .center)))
+                        .overlay(shape.stroke(Color.white.opacity(0.7), lineWidth: 1.2))
+                        .shadow(color: tint.opacity(0.55), radius: 10, y: 3)
+                        .transition(.opacity)
                 }
-                Text(title)   // không có icon (ví dụ AVIF): chữ to hơn cho dễ đọc
-                    .font(.system(size: big ? 12 : (symbol.isEmpty && icon == nil ? 14 : 11), weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .fixedSize()
+                VStack(spacing: 3) {
+                    if let icon {
+                        Image(nsImage: icon)
+                            .renderingMode(icon.isTemplate ? .template : .original)
+                            .resizable()
+                            .interpolation(.high)
+                            .scaledToFit()
+                            .frame(width: 26, height: 26)
+                    } else if !symbol.isEmpty {
+                        Image(systemName: symbol)
+                            .font(.system(size: big ? 19 : 15, weight: .semibold))
+                    }
+                    Text(title)   // không có icon (ví dụ AVIF): chữ to hơn cho dễ đọc
+                        .font(.system(size: big ? 12 : (symbol.isEmpty && icon == nil ? 14 : 11), weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                        .fixedSize()
+                }
+                .foregroundStyle(labelColor)
+                .position(labelPoint)
             }
-            .foregroundStyle(labelColor)
-            .shadow(color: hovered ? .black.opacity(0.25) : .clear, radius: 2, y: 1)
-            .scaleEffect(hovered ? 1.08 : 1)
-            .position(labelPoint)
+            .scaleEffect(hovered ? 1.12 : 1, anchor: anchor)
+            .offset(x: CGFloat(cos(mid)) * push, y: CGFloat(sin(mid)) * push)
         }
-        .scaleEffect(hovered ? 1.09 : 1, anchor: anchor)
-        .opacity(dimmed ? 0.78 : 1)
-        .offset(x: CGFloat(cos(mid)) * push, y: CGFloat(sin(mid)) * push)
         .zIndex(hovered ? 1 : 0)
     }
 

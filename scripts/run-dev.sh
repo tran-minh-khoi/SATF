@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build nhanh bản chạy thử để xem giao diện: chỉ chip của máy này, ký ad-hoc, không tạo DMG, rồi mở luôn.
+# Build nhanh bản chạy thử để xem giao diện: chỉ chip của máy này, tối ưu như bản phát hành (-O), ký ad-hoc, không tạo DMG, rồi mở luôn.
 # Bản SATF đang chạy (nếu có) sẽ được tắt trước. Chạy bản phát hành: ./build.sh
 #   APPSTORE=1 ./scripts/run-dev.sh   chạy thử bản Mac App Store: bật sandbox, lưu file vào Downloads
 set -euo pipefail
@@ -12,7 +12,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/FormatIcons"
 FLAG=""
 [ "${APPSTORE:-0}" = 1 ] && FLAG="-D APPSTORE"
 echo "▸ Biên dịch ($(uname -m)) ${FLAG}…"
-xcrun swiftc -swift-version 5 $FLAG -sdk "$SDK" -target "$(uname -m)-apple-macos13.0" Sources/*.swift -o "$APP/Contents/MacOS/SATF"
+xcrun swiftc -O -swift-version 5 $FLAG -sdk "$SDK" -target "$(uname -m)-apple-macos13.0" Sources/*.swift -o "$APP/Contents/MacOS/SATF"
 
 cp Info.plist "$APP/Contents/Info.plist"
 plutil -replace CFBundleShortVersionString -string "$(tr -d '[:space:]' < VERSION)" "$APP/Contents/Info.plist"
