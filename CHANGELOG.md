@@ -4,7 +4,7 @@ All notable changes to SATF are listed here. Versions follow [Semantic Versionin
 
 ## Mac App Store edition (nhánh `appstore`)
 
-- Radial menu in a glass style: Liquid Glass on macOS 26, a glass look on macOS 13–15; hovered slices zoom, light up in their color and glow.
+- Radial menu in a glass style (rounded glass slices with light and rim); the hovered slice lights up in its color at once, zooms and pops out.
 - Sandboxed. New files go to Downloads, or a folder chosen in Settings → Converted files.
 - No automatic updates, add-ons, support window or uninstaller (the App Store handles these). Excel & PowerPoint conversion is not available.
 - `build-appstore.sh` builds a signed `.pkg`; listing text, review notes and screenshots in `appstore/`.

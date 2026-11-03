@@ -10,8 +10,6 @@ let out = URL(fileURLWithPath: CommandLine.arguments[1])
 let appStoreMode = CommandLine.arguments.count > 4 && CommandLine.arguments[4] == "appstore"
 let storeLang = CommandLine.arguments.count > 5 ? CommandLine.arguments[5] : "en"
 if appStoreMode { Settings.shared.language = storeLang == "vi" ? .vi : .en }
-// Ảnh chụp offscreen không bắt được Liquid Glass thật của macOS 26 -> vẽ kính giả lập
-RadialStyle.simulatedGlass = true
 let samples = URL(fileURLWithPath: CommandLine.arguments[2])
 func sample(_ n: String) -> URL { samples.appendingPathComponent(n) }
 

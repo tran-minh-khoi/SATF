@@ -126,8 +126,12 @@ final class RadialModel: ObservableObject {
     @Published var hoveredItem: Int?
     @Published var status: PanelStatus = .idle
 
+    /// Icon của file đang cầm: lấy một lần lúc mở menu (hỏi hệ thống mỗi lần vẽ lại làm hover bị giật)
+    let fileIcon: NSImage
+
     init(files: [URL]) {
         self.files = files
+        fileIcon = NSWorkspace.shared.icon(forFile: files[0].path)
         clipboardItems = [
             RadialItem(id: 0, title: "Copy", symbol: "doc.on.doc", target: .copy),
             RadialItem(id: 1, title: L("Shelf", "Khay"), symbol: "tray.and.arrow.down", target: .openShelf),
@@ -339,68 +343,40 @@ struct RingSegment: Shape {
 
 private enum SegmentState { case normal, active, hovered, disabled }
 
-enum RadialStyle {
-    /// true: luôn vẽ kính giả lập. Ảnh chụp bằng cacheDisplay (scripts/screenshots.sh) không bắt được Liquid Glass thật của macOS 26.
-    static var simulatedGlass = false
-}
-
-/// Một mảnh kính: Liquid Glass thật trên macOS 26, kính giả lập (mờ + viền sáng + độ dày) trên macOS 13–15.
+/// Một mảnh kính: nền mờ của hệ thống (như bản cũ) + ánh sáng vẽ bằng vector. Nhẹ, đổi trạng thái tức thì.
+/// Không dùng glassEffect (Liquid Glass) của macOS 26 cho menu tròn: mỗi mảnh Liquid Glass tự chạy animation
+/// khoảng nửa giây khi đổi trạng thái và phải tính lại nền phía sau, làm hover bị trễ.
 private struct GlassSurface<S: Shape>: View {
     let shape: S
     var tint: Color? = nil
     var state: SegmentState = .normal
 
+    private var fill: Color {
+        guard let tint else { return .clear }
+        switch state {
+        case .hovered, .active: return tint.opacity(0.26)
+        case .normal: return tint.opacity(0.10)
+        case .disabled: return Color.primary.opacity(0.02)
+        }
+    }
+
     var body: some View {
-        #if compiler(>=6.2)
-        if #available(macOS 26.0, *), !RadialStyle.simulatedGlass {
-            Color.clear.glassEffect(Glass.regular.tint(nativeTint), in: shape)
-        } else {
-            simulated
-        }
-        #else
-        simulated
-        #endif
-    }
-
-    private var nativeTint: Color? {
-        guard let tint else { return nil }
-        switch state {
-        case .hovered: return tint.opacity(0.9)
-        case .active: return tint.opacity(0.4)
-        case .normal: return tint.opacity(0.14)
-        case .disabled: return nil
-        }
-    }
-
-    private var fill: AnyShapeStyle {
-        guard let tint else { return AnyShapeStyle(Color.clear) }
-        switch state {
-        case .hovered: return AnyShapeStyle(LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.72)],
-                                                           startPoint: .top, endPoint: .bottom))
-        case .active: return AnyShapeStyle(tint.opacity(0.28))
-        case .normal: return AnyShapeStyle(tint.opacity(0.10))
-        case .disabled: return AnyShapeStyle(Color.primary.opacity(0.02))
-        }
-    }
-
-    private var simulated: some View {
         ZStack {
             shape.fill(.ultraThinMaterial)
             shape.fill(fill)
             // Ánh sáng từ góc trên-trái: mặt kính sáng hơn ở phía trên
-            shape.fill(LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.03), .clear],
+            shape.fill(LinearGradient(colors: [.white.opacity(0.24), .white.opacity(0.04), .clear],
                                       startPoint: .topLeading, endPoint: .bottomTrailing))
-            // Độ dày của kính: dải sáng mảnh chạy dọc mép trong (không dùng blur cho nhẹ)
-            shape.stroke(Color.white.opacity(0.14), lineWidth: 5)
+            // Độ dày của kính: dải sáng mảnh chạy dọc mép trong
+            shape.stroke(Color.white.opacity(0.12), lineWidth: 5)
                 .clipShape(shape)
             // Mép kính: sáng ở cạnh hướng về nguồn sáng, mờ dần ở cạnh đối diện
-            shape.stroke(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.2), .white.opacity(0.05), .white.opacity(0.4)],
+            shape.stroke(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.22), .white.opacity(0.06), .white.opacity(0.4)],
                                         startPoint: .topLeading, endPoint: .bottomTrailing),
                          lineWidth: 1.1)
         }
         .compositingGroup()
-        .shadow(color: state == .hovered ? (tint ?? .black).opacity(0.45) : .black.opacity(0.16),
-                radius: state == .hovered ? 16 : 10, y: 4)
+        .shadow(color: .black.opacity(0.16), radius: 8, y: 3)
     }
 }
 
@@ -432,8 +408,8 @@ struct RadialMenuView: View {
         .opacity(appeared ? 1 : 0)
         .animation(.spring(response: 0.3, dampingFraction: 0.78), value: model.expanded)
         .animation(.spring(response: 0.34, dampingFraction: 0.78), value: model.showAll)
-        .animation(.spring(response: 0.26, dampingFraction: 0.62), value: model.hoveredItem)
-        .animation(.spring(response: 0.26, dampingFraction: 0.62), value: model.hoveredSide)
+        .animation(.spring(response: 0.2, dampingFraction: 0.74), value: model.hoveredItem)
+        .animation(.spring(response: 0.2, dampingFraction: 0.74), value: model.hoveredSide)
         .animation(.spring(response: 0.35, dampingFraction: 0.55), value: model.status)   // ✓ nảy nhẹ khi xong
         .onAppear {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) { appeared = true }
@@ -503,12 +479,8 @@ struct RadialMenuView: View {
         let labelColor: Color = hovered ? .white : (state == .disabled ? .secondary : .primary)
 
         return ZStack {
-            // Mặt kính đứng yên (không phóng to, không đổi màu theo hover): kính phải tính lại nền phía sau
-            // mỗi khi biến đổi, nên để yên thì hover mới mượt
-            GlassSurface(shape: shape, tint: tint, state: hovered ? .active : state)
-            if state == .active || hovered {
-                shape.fill(tint.opacity(0.2))
-            }
+            // Mặt kính đứng yên (không phóng to): nền mờ phải tính lại mỗi khi biến đổi, nên để yên thì hover mới mượt
+            GlassSurface(shape: shape, tint: tint, state: state)
             // Lớp nổi lên khi trỏ vào: màu của nhóm + chữ, phóng to và bật ra ngoài
             ZStack {
                 if hovered {
@@ -517,7 +489,7 @@ struct RadialMenuView: View {
                                                            startPoint: .top, endPoint: .center)))
                         .overlay(shape.stroke(Color.white.opacity(0.7), lineWidth: 1.2))
                         .shadow(color: tint.opacity(0.55), radius: 10, y: 3)
-                        .transition(.opacity)
+                        .transition(.opacity.animation(.easeOut(duration: 0.08)))   // màu hiện gần như tức thì
                 }
                 VStack(spacing: 3) {
                     if let icon {
@@ -551,7 +523,7 @@ struct RadialMenuView: View {
             GlassSurface(shape: Circle())
             switch model.status {
             case .idle:
-                Image(nsImage: NSWorkspace.shared.icon(forFile: model.files[0].path))
+                Image(nsImage: model.fileIcon)
                     .resizable()
                     .frame(width: 48, height: 48)
                     .overlay(alignment: .topTrailing) {
