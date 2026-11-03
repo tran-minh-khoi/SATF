@@ -78,11 +78,16 @@ done
 lipo -create -output "$BUNDLE/Contents/Resources/cwebp" "$CACHE/libwebp-$WEBP-mac-arm64/bin/cwebp" "$CACHE/libwebp-$WEBP-mac-x86-64/bin/cwebp"
 cp "$PROFILE" "$BUNDLE/Contents/embedded.provisionprofile"
 
+# File tải từ trình duyệt (provisioning profile, gói cwebp) mang thuộc tính com.apple.quarantine,
+# App Store từ chối (lỗi 91109) -> gỡ mọi thuộc tính mở rộng trước khi ký
+xattr -cr "$BUNDLE"
+
 echo "▸ Ký bằng ${APP_ID}…"
 codesign --force --sign "$APP_ID" --entitlements appstore/cwebp.entitlements "$BUNDLE/Contents/Resources/cwebp"
 codesign --force --sign "$APP_ID" --entitlements appstore/SATF.entitlements "$BUNDLE"
 codesign --verify --strict --deep "$BUNDLE"
 codesign -d --entitlements - --xml "$BUNDLE" 2>/dev/null | grep -q app-sandbox || { echo "✗ Thiếu sandbox trong chữ ký"; exit 1; }
+if xattr -lr "$BUNDLE" | grep -q com.apple.quarantine; then echo "✗ Còn file mang com.apple.quarantine trong app"; exit 1; fi
 
 echo "▸ Đóng gói ${PKG} (ký bằng ${PKG_ID})…"
 productbuild --component "$BUNDLE" /Applications --sign "$PKG_ID" "$PKG"
