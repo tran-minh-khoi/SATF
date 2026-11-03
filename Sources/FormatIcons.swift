@@ -7,16 +7,19 @@ enum FormatIcons {
     /// Icon chỉ có một màu (nét đen trên nền trong suốt): vẽ dạng template để theo màu chữ, không bị chìm ở Dark Mode
     private static let monochrome: Set<String> = ["csv"]
 
-    private static var cache: [String: NSImage] = [:]
+    /// nil = đã tìm và không có icon (ví dụ AVIF): nhớ lại để không tìm file mỗi lần vẽ menu
+    private static var cache: [String: NSImage?] = [:]
 
     static func image(named name: String) -> NSImage? {
         if let hit = cache[name] { return hit }
-        // Trong app: Resources/FormatIcons. Chạy ngoài app (scripts/screenshots.sh, chạy từ thư mục dự án): assets/icons/formats
-        let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "FormatIcons")
-            ?? URL(fileURLWithPath: "assets/icons/formats/\(name).png")
-        guard let image = NSImage(contentsOf: url) else { return nil }
-        image.isTemplate = monochrome.contains(name)
-        cache[name] = image
+        var url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "FormatIcons")
+        // Chạy ngoài app (scripts/screenshots.sh, từ thư mục dự án): lấy thẳng từ assets/icons/formats
+        if url == nil, Bundle.main.bundleURL.pathExtension != "app" {
+            url = URL(fileURLWithPath: "assets/icons/formats/\(name).png")
+        }
+        let image = url.flatMap(NSImage.init(contentsOf:))
+        image?.isTemplate = monochrome.contains(name)
+        cache[name] = .some(image)
         return image
     }
 }
