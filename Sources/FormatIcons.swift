@@ -2,7 +2,7 @@ import AppKit
 
 /// Icon định dạng trong menu tròn. Nguồn: assets/icons/formats/<tên>.png,
 /// build.sh thu nhỏ và chép vào SATF.app/Contents/Resources/FormatIcons/.
-/// Định dạng không có icon (hoặc chạy ngoài bundle, ví dụ scripts/screenshots.sh) thì dùng SF Symbol như cũ.
+/// Định dạng không có icon thì dùng SF Symbol như cũ.
 enum FormatIcons {
     /// Icon chỉ có một màu (nét đen trên nền trong suốt): vẽ dạng template để theo màu chữ, không bị chìm ở Dark Mode
     private static let monochrome: Set<String> = ["csv"]
@@ -11,8 +11,10 @@ enum FormatIcons {
 
     static func image(named name: String) -> NSImage? {
         if let hit = cache[name] { return hit }
-        guard let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "FormatIcons"),
-              let image = NSImage(contentsOf: url) else { return nil }
+        // Trong app: Resources/FormatIcons. Chạy ngoài app (scripts/screenshots.sh, chạy từ thư mục dự án): assets/icons/formats
+        let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "FormatIcons")
+            ?? URL(fileURLWithPath: "assets/icons/formats/\(name).png")
+        guard let image = NSImage(contentsOf: url) else { return nil }
         image.isTemplate = monochrome.contains(name)
         cache[name] = image
         return image
