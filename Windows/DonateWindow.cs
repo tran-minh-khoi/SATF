@@ -10,7 +10,7 @@ using Image = System.Windows.Controls.Image;
 
 namespace SATF;
 
-/// Thông tin ủng hộ (giống bản Mac). Mã QR (assets/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
+/// Thông tin ủng hộ (giống bản Mac). Mã QR (assets/images/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
 /// Ko-fi, PayPal, GitHub và chuyển khoản trong nước ở cùng một chỗ.
 public static class Donate
 {

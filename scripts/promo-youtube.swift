@@ -8,7 +8,7 @@ import SwiftUI
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 app.appearance = NSAppearance(named: .darkAqua)
-NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/logo.png")
+NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/brand/logo.png")
 Settings.shared.language = .en
 let outDir = URL(fileURLWithPath: CommandLine.arguments[1])
 let samples = URL(fileURLWithPath: CommandLine.arguments[2])

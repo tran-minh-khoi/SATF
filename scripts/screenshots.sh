@@ -8,10 +8,10 @@ trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/samples" docs/images
 
 # File mẫu để hiện trong menu / khay
-cp assets/logo.png "$TMP/samples/Vacation photo.png"
-cp assets/logo.png "$TMP/samples/Screenshot.png"
-sips -s format jpeg assets/logo.png --out "$TMP/samples/Beach day.jpg" >/dev/null
-cp assets/donate-qr.png "$TMP/"   # cửa sổ Ủng hộ đọc mã QR cạnh chương trình chụp
+cp assets/brand/logo.png "$TMP/samples/Vacation photo.png"
+cp assets/brand/logo.png "$TMP/samples/Screenshot.png"
+sips -s format jpeg assets/brand/logo.png --out "$TMP/samples/Beach day.jpg" >/dev/null
+cp assets/images/donate-qr.png "$TMP/"   # cửa sổ Ủng hộ đọc mã QR cạnh chương trình chụp
 for f in "Report Q3.docx" "Budget 2026.xlsx" "Pitch deck.pptx" "Holiday.zip"; do printf 'x' > "$TMP/samples/$f"; done
 
 cp scripts/screenshots.swift "$TMP/main.swift"   # Swift chỉ chạy code trực tiếp trong main.swift

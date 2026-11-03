@@ -14,9 +14,9 @@ SRC=scripts/promo.swift
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/samples"
-cp assets/logo.png "$TMP/samples/Vacation photo.png"
-cp assets/logo.png "$TMP/samples/Screenshot.png"
-sips -s format jpeg assets/logo.png --out "$TMP/samples/Beach day.jpg" >/dev/null
+cp assets/brand/logo.png "$TMP/samples/Vacation photo.png"
+cp assets/brand/logo.png "$TMP/samples/Screenshot.png"
+sips -s format jpeg assets/brand/logo.png --out "$TMP/samples/Beach day.jpg" >/dev/null
 for f in "Report Q3.docx" "Budget 2026.xlsx" "Pitch deck.pptx"; do printf x > "$TMP/samples/$f"; done
 
 cp "$SRC" "$TMP/main.swift"

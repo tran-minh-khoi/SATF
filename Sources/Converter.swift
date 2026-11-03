@@ -123,31 +123,81 @@ enum Converter {
         return .unknown
     }
 
-    /// Xếp theo mức hay dùng: cái phổ biến đứng trước. ZIP luôn ở cuối, file nào cũng nén được.
+    /// Xếp theo mức hay dùng với chính loại file đang cầm: cái phổ biến đứng trước.
+    /// Mỗi nửa menu hiện tối đa 5 ô + "Thêm N" (RadialModel.halfLimit), nên ZIP luôn nằm trong 5 ô đầu,
+    /// trước các định dạng ít dùng, để không bị giấu sau nút "Thêm".
     static func targets(for url: URL) -> [Format] {
+        let own = normalizedExt(url)
         var all: [Format]
         switch kind(of: url) {
         case .image:
-            all = [.jpg, .png, .pdf, .webp, .heic, .gif, .tiff, .bmp, .avif, .ico]
-                .filter { $0 == .pdf || $0 == .webp || writableImageTypes.contains($0.imageType?.identifier ?? "") }
+            all = imageTargets(from: own)
+                .filter { [.pdf, .webp, .zip].contains($0) || writableImageTypes.contains($0.imageType?.identifier ?? "") }
             if canEditInPlace(url) {
                 all += [.rotate, .resize]
-                if lossyExts.contains(normalizedExt(url)) { all.append(.compress) }
+                if lossyExts.contains(own) { all.append(.compress) }
                 all.append(.shrink)
                 all.append(.stripMetadata)
             }
-        case .pdf:          all = [.jpg, .png, .txt, .splitPDF, .rotate]
-        case .document:     all = [.pdf, .docx, .txt, .rtf, .html, .odt]
-        case .spreadsheet:  all = [.pdf, .csv]
-        case .presentation: all = [.pdf, .png, .jpg]
-        case .video:        all = [.mp4, .mov, .m4a]
-        case .audio:        all = [.m4a, .wav, .aiff]
-        case .archive:      return [.extract]
-        case .unknown:      all = []
+        // PDF → ảnh (JPG nhẹ để gửi, PNG nét), lấy chữ ra TXT
+        case .pdf:
+            all = [.jpg, .png, .txt, .zip, .splitPDF, .rotate]
+        case .document:
+            switch own {
+            // Word → PDF là nhiều nhất (nộp, gửi), rồi lấy chữ ra TXT
+            case "docx":
+                all = [.pdf, .txt, .zip, .html, .rtf, .odt]
+            // Word cũ, LibreOffice, RTF → DOCX để mở bằng Word bản mới, rồi PDF
+            case "doc", "odt", "rtf", "rtfd":
+                all = [.docx, .pdf, .txt, .zip, .html, .rtf, .odt]
+            // Văn bản thô, Markdown → PDF, Word, trang web
+            case "txt", "md":
+                all = [.pdf, .docx, .html, .zip, .rtf, .odt]
+            // Trang web → PDF để lưu lại, Word để sửa, TXT lấy chữ
+            case "html", "webarchive":
+                all = [.pdf, .docx, .txt, .zip, .rtf, .odt]
+            default:
+                all = [.pdf, .docx, .txt, .zip, .html, .rtf, .odt]
+            }
+        // Excel/Numbers → PDF (in, gửi), CSV (nhập vào hệ thống khác), ảnh bảng (PNG giữ chữ nét, JPG nhẹ)
+        case .spreadsheet:
+            all = [.pdf, .csv, .png, .jpg, .zip]
+        // PowerPoint/Keynote → PDF, rồi ảnh từng slide: JPG nhẹ, PNG nét
+        case .presentation:
+            all = [.pdf, .jpg, .png, .zip]
+        // MOV (iPhone) → MP4 là nhiều nhất, tách tiếng ra M4A, rồi MOV (dựng trên Final Cut/iMovie)
+        case .video:
+            all = [.mp4, .m4a, .mov, .zip]
+        // Nhạc → M4A (nhẹ, nghe trên iPhone), WAV (chỉnh âm thanh, Windows), AIFF (Mac, Logic)
+        case .audio:
+            all = [.m4a, .wav, .aiff, .zip]
+        case .archive:
+            return [.extract]
+        case .unknown:
+            all = [.zip]
         }
-        all.append(.zip)
-        let own = normalizedExt(url)
         return all.filter { $0.rawValue != own }
+    }
+
+    /// Thứ tự định dạng đích cho ảnh, tuỳ ảnh gốc. ZIP đứng thứ 5, các định dạng còn lại xếp sau.
+    private static func imageTargets(from ext: String) -> [Format] {
+        let first: [Format]
+        switch ext {
+        // Ảnh iPhone: đổi sang JPG/PNG để gửi, mở trên Windows
+        case "heic", "heif":  first = [.jpg, .png, .pdf, .webp]
+        // PNG: JPG cho nhẹ, PDF, WebP cho web, ICO làm icon
+        case "png":           first = [.jpg, .pdf, .webp, .ico]
+        // JPG: PNG, PDF, WebP cho web, HEIC tiết kiệm dung lượng
+        case "jpg":           first = [.png, .pdf, .webp, .heic]
+        // Ảnh tải từ web: JPG/PNG để mở được ở mọi nơi
+        case "webp", "avif":  first = [.jpg, .png, .pdf, .gif]
+        case "gif":           first = [.png, .jpg, .webp, .pdf]
+        // SVG: PNG (giữ nền trong suốt), JPG, PDF, ICO
+        case "svg":           first = [.png, .jpg, .pdf, .ico]
+        default:              first = [.jpg, .png, .pdf, .webp]
+        }
+        let rest: [Format] = [.jpg, .png, .pdf, .webp, .heic, .gif, .tiff, .bmp, .avif, .ico]
+        return first + [.zip] + rest.filter { !first.contains($0) }
     }
 
     /// Loại file đổi được sang PDF, nên gộp chung được vào một PDF
@@ -155,8 +205,8 @@ enum Converter {
 
     /// Nhiều file:
     /// - "Gộp PDF" đứng đầu nếu file nào cũng đổi được sang PDF (PDF, Word, Excel, PowerPoint, ảnh, văn bản)
-    /// - các định dạng mà file nào cũng đổi được (mỗi file ra một file mới)
-    /// - ZIP luôn ở cuối: nén tất cả vào một file, kể cả khi có thư mục hay file nén
+    /// - ZIP đứng đầu nửa Convert: cầm nhiều file thì nén chung là việc hay làm nhất (kể cả có thư mục hay file nén)
+    /// - sau đó là các định dạng mà file nào cũng đổi được (mỗi file ra một file mới)
     static func targets(for urls: [URL]) -> [Format] {
         guard let first = urls.first else { return [] }
         if urls.count == 1 { return targets(for: first) }
@@ -169,7 +219,7 @@ enum Converter {
         let canMerge = urls.allSatisfy { pdfKinds.contains(kind(of: $0)) }
         let canStack = urls.allSatisfy { kind(of: $0) == .image }
         // Gộp/ghép đứng đầu nhóm Edit vì đó là lý do hay cầm nhiều file nhất
-        return (canMerge ? [.mergePDF] : []) + (canStack ? [.longImage] : []) + common + [.zip]
+        return (canMerge ? [.mergePDF] : []) + (canStack ? [.longImage] : []) + [.zip] + common
     }
 
     /// Ảnh sửa được và lưu lại đúng định dạng gốc (GIF động, SVG, ICO thì không)
@@ -220,11 +270,12 @@ enum Converter {
         case .image:          return [try convertImage(src, to: format)]
         case .pdf:            return try convertPDF(src, to: format)
         case .document:       return [try convertDocument(src, to: format)]
-        case .spreadsheet:
+        case .spreadsheet where format == .csv || format == .pdf:
             let dst = destination(for: src, ext: format.ext)
             try officeExport(src, ext: format.ext, to: dst)
             return [dst]
-        case .presentation:
+        // Excel → ảnh và PowerPoint → mọi định dạng: xuất PDF trước rồi đổi từng trang
+        case .spreadsheet, .presentation:
             let pdf = destination(for: src, ext: "pdf")
             try officeExport(src, ext: "pdf", to: pdf)
             if format == .pdf { return [pdf] }

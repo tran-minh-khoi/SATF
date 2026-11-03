@@ -22,7 +22,9 @@ See [Build from source](README.md#build-from-source) in the README. Both apps bu
 |---|---|
 | `Sources/` | macOS app (Swift, AppKit + SwiftUI) |
 | `Windows/` | Windows app (C#, WPF) and the NSIS installer script |
-| `assets/logo.png` | The logo. All app icons are generated from it at build time |
+| `assets/brand/logo.png` | The logo. All app icons are generated from it at build time |
+| `assets/icons/formats/` | File-format icons for the radial menu (see `assets/README.md`) |
+| `assets/images/` | Other in-app images (support QR code) |
 | `docs/images/` | README screenshots, made by `scripts/screenshots.sh` |
 | `VERSION` | Version number used by both apps |
 

@@ -14,6 +14,7 @@ struct RadialItem: Identifiable {
     let id: Int
     let title: String
     let symbol: String
+    var icon: NSImage? = nil   // icon định dạng (assets/icons/formats), ưu tiên hơn SF Symbol
     let target: RadialTarget
 }
 
@@ -132,11 +133,12 @@ final class RadialModel: ObservableObject {
             RadialItem(id: 1, title: L("Shelf", "Khay"), symbol: "tray.and.arrow.down", target: .openShelf),
         ]
         let targets = Converter.targets(for: files)
-        // Đổi giữa các định dạng ảnh: tên định dạng đã đủ rõ, bỏ icon ảnh lặp lại
+        // Đổi giữa các định dạng ảnh mà chưa có icon riêng: tên định dạng đã đủ rõ, bỏ icon ảnh lặp lại
         let allImages = files.allSatisfy { Converter.kind(of: $0) == .image }
         func item(_ index: Int, _ format: Format) -> RadialItem {
             RadialItem(id: index, title: format.label,
                        symbol: allImages && format.isImageFormat ? "" : format.symbol,
+                       icon: format.icon,
                        target: .convert(format))
         }
         allConvertItems = targets.filter { !$0.isEdit }.enumerated().map(item)
@@ -386,13 +388,14 @@ struct RadialMenuView: View {
                         inner: RadialGeo.outerFrom, outer: RadialGeo.outerTo,
                         tint: tint(side),
                         state: (model.hoveredSide == side && model.hoveredItem == item.id) ? .hovered : .normal,
-                        title: item.title, symbol: item.symbol, big: false)
+                        title: item.title, symbol: item.symbol, icon: item.icon, big: false)
             }
         }
     }
 
     private func segment(range: (Double, Double), inner: CGFloat, outer: CGFloat, tint: Color,
-                         state: SegmentState, title: String, symbol: String, big: Bool) -> some View {
+                         state: SegmentState, title: String, symbol: String, icon: NSImage? = nil,
+                         big: Bool) -> some View {
         let shape = RingSegment(start: range.0, end: range.1, inner: inner, outer: outer, center: RadialGeo.center)
         let mid = (range.0 + range.1) / 2 * .pi / 180
         let push: CGFloat = state == .hovered ? 9 : 0
@@ -413,12 +416,20 @@ struct RadialMenuView: View {
             shape.stroke(state == .hovered ? Color.white.opacity(0.55) : tint.opacity(state == .disabled ? 0.1 : 0.45),
                          lineWidth: 1)
             VStack(spacing: 3) {
-                if !symbol.isEmpty {
+                if let icon {
+                    Image(nsImage: icon)
+                        .renderingMode(icon.isTemplate ? .template : .original)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFit()
+                        .frame(width: 26, height: 26)
+                        .shadow(color: .black.opacity(state == .hovered ? 0.25 : 0.12), radius: 1.5, y: 1)
+                } else if !symbol.isEmpty {
                     Image(systemName: symbol)
                         .font(.system(size: big ? 19 : 15, weight: .semibold))
                 }
-                Text(title)   // không có icon (ví dụ JPG, PNG): chữ to hơn cho dễ đọc
-                    .font(.system(size: big ? 12 : (symbol.isEmpty ? 14 : 11), weight: .bold))
+                Text(title)   // không có icon (ví dụ TIFF, BMP): chữ to hơn cho dễ đọc
+                    .font(.system(size: big ? 12 : (symbol.isEmpty && icon == nil ? 14 : 11), weight: .bold))
                     .lineLimit(1)
                     .fixedSize()
             }

@@ -4,7 +4,7 @@ import SwiftUI
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 app.appearance = NSAppearance(named: CommandLine.arguments[3] == "dark" ? .darkAqua : .aqua)
-NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/logo.png")
+NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/brand/logo.png")
 let out = URL(fileURLWithPath: CommandLine.arguments[1])
 let samples = URL(fileURLWithPath: CommandLine.arguments[2])
 func sample(_ n: String) -> URL { samples.appendingPathComponent(n) }

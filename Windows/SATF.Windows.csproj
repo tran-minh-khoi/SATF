@@ -35,6 +35,6 @@
 
   <ItemGroup>
     <Resource Include="AppIcon.png" />
-    <Resource Include="..\assets\donate-qr.png" Link="donate-qr.png" />
+    <Resource Include="..\assets\images\donate-qr.png" Link="donate-qr.png" />
   </ItemGroup>
 </Project>

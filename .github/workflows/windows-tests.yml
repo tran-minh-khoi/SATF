@@ -8,7 +8,7 @@ on:
     paths: [Windows/**, tests/WindowsEditTests/**, .github/workflows/windows-tests.yml]
 
 jobs:
-  # Icon app (AppIcon.ico/png) không nằm trong git, build-win.sh tạo từ assets/logo.png bằng sips (chỉ có trên macOS)
+  # Icon app (AppIcon.ico/png) không nằm trong git, build-win.sh tạo từ assets/brand/logo.png bằng sips (chỉ có trên macOS)
   icons:
     runs-on: macos-latest
     steps:

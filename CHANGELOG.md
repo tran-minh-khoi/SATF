@@ -2,6 +2,17 @@
 
 All notable changes to SATF are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [1.2.3] — 2026-11-03
+
+### Added
+- Excel and Numbers files can now be converted to **PNG** and **JPG** (one image per page), like PowerPoint.
+
+### Changed
+- Radial menu: Convert targets show colored file-format icons (PDF, DOCX, ODT, RTF, TXT, HTML, CSV, JPG, PNG, WebP, HEIC, GIF, BMP, TIFF, ICO, MP4, MOV, M4A, WAV, AIFF, ZIP) instead of generic symbols.
+- Convert targets are ordered by what people usually pick for that file: HEIC → JPG first, JPG → PNG, PNG → JPG/ICO, old Word/ODT/RTF → DOCX first, Word → PDF, MOV → MP4, video → M4A (extract audio) before MOV.
+- **ZIP** always shows in the first five slots instead of the end, so it no longer hides behind "N more". With several files, ZIP is the first Convert option.
+- Project assets reorganized: `assets/brand/` (logo), `assets/icons/formats/` (format icons), `assets/images/` (support QR code).
+
 ## [1.2.2] — 2026-10-30
 
 ### Changed

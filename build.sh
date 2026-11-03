@@ -11,8 +11,8 @@ SDK="$(xcrun --sdk macosx --show-sdk-path)"
 rm -rf "$BUNDLE" "$OUT"/*.dmg   # chỉ xoá bản Mac, giữ lại build/windows
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 
-echo "▸ Tạo icon từ assets/logo.png…"
-LOGO=assets/logo.png
+echo "▸ Tạo icon app từ assets/brand/logo.png…"
+LOGO=assets/brand/logo.png
 ICONSET="$OUT/AppIcon.iconset"
 rm -rf "$ICONSET" && mkdir -p "$ICONSET"
 for S in 16 32 128 256 512; do
@@ -45,7 +45,14 @@ for A in arm64 x86-64; do
   [ -f "$TGZ" ] || curl -fsSL "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-$WEBP-mac-$A.tar.gz" -o "$TGZ"
   tar -xzf "$TGZ" -C "$CACHE" "libwebp-$WEBP-mac-$A/bin/cwebp"
 done
-cp THIRD_PARTY_NOTICES.md LICENSE assets/donate-qr.png "$BUNDLE/Contents/Resources/"
+cp THIRD_PARTY_NOTICES.md LICENSE assets/images/donate-qr.png "$BUNDLE/Contents/Resources/"
+
+echo "▸ Đóng gói icon định dạng (assets/icons/formats → Resources/FormatIcons)…"
+mkdir -p "$BUNDLE/Contents/Resources/FormatIcons"
+for F in assets/icons/formats/*.png; do
+  # 128px đủ nét cho ô 26pt trên màn Retina, nhẹ hơn nhiều so với bản gốc 512px
+  sips -Z 128 "$F" --out "$BUNDLE/Contents/Resources/FormatIcons/$(basename "$F")" >/dev/null
+done
 lipo -create -output "$BUNDLE/Contents/Resources/cwebp" "$CACHE/libwebp-$WEBP-mac-arm64/bin/cwebp" "$CACHE/libwebp-$WEBP-mac-x86-64/bin/cwebp"
 
 # Có chứng chỉ "Developer ID Application" trong Keychain -> ký chuẩn để phát hành; chưa có thì ký ad-hoc (chỉ chạy thử)

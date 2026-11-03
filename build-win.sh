@@ -5,9 +5,9 @@ cd "$(dirname "$0")"
 
 OUT="build/windows"
 
-echo "▸ Tạo icon từ assets/logo.png…"
+echo "▸ Tạo icon từ assets/brand/logo.png…"
 # AppIcon.ico (icon file exe, nhiều cỡ) và AppIcon.png (logo trong app) — tạo lại mỗi lần build
-python3 - assets/logo.png Windows/AppIcon.ico <<'PY'
+python3 - assets/brand/logo.png Windows/AppIcon.ico <<'PY'
 import struct, subprocess, sys, tempfile, os
 src, dst = sys.argv[1], sys.argv[2]
 frames = []
@@ -25,7 +25,7 @@ with open(dst, "wb") as f:
     for _, data in frames:
         f.write(data)
 PY
-sips -z 256 256 assets/logo.png --out Windows/AppIcon.png >/dev/null
+sips -z 256 256 assets/brand/logo.png --out Windows/AppIcon.png >/dev/null
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
 

@@ -50,6 +50,19 @@ check(t.filter(\.isEdit) == [.rotate, .resize, .compress, .shrink, .stripMetadat
 check(Converter.targets(for: png).filter(\.isEdit) == [.rotate, .resize, .shrink, .stripMetadata], "png has no Compress")
 check(Converter.targets(for: [photo, png]).filter(\.isEdit).prefix(2) == [.mergePDF, .longImage], "multi: merge + stack first")
 
+// Thứ tự Convert: hay dùng trước, ZIP luôn trong 5 ô đầu (không bị giấu sau "Thêm")
+func convertTargets(_ name: String) -> [Format] { Converter.targets(for: dir.appendingPathComponent(name)).filter { !$0.isEdit } }
+check(Array(convertTargets("a.jpg").prefix(3)) == [.png, .pdf, .webp], "jpg → png, pdf, webp first: \(convertTargets("a.jpg"))")
+check(convertTargets("a.png").first == .jpg, "png → jpg first")
+check(convertTargets("a.heic").first == .jpg, "heic → jpg first")
+check(convertTargets("a.xlsx") == [.pdf, .csv, .png, .jpg, .zip], "xlsx order: \(convertTargets("a.xlsx"))")
+check(convertTargets("a.doc").first == .docx && convertTargets("a.docx").first == .pdf, "word order")
+check(convertTargets("a.mov").prefix(2) == [.mp4, .m4a], "mov → mp4, m4a")
+for name in ["a.jpg", "a.png", "a.heic", "a.webp", "a.pdf", "a.docx", "a.txt", "a.xlsx", "a.pptx", "a.mov", "a.mp3"] {
+    check((convertTargets(name).firstIndex(of: .zip) ?? 99) < 5, "\(name): zip in first 5 slots \(convertTargets(name))")
+}
+check(Converter.targets(for: [photo, png]).filter { !$0.isEdit }.first == .zip, "multi: zip first in Convert")
+
 func run(_ f: Format, _ src: URL) -> [URL] { do { return try Converter.convert(src, to: f) } catch { check(false, "\(f) threw: \(error.localizedDescription)"); return [] } }
 
 // Xoay: ảnh gốc hiển thị 2000x3000 (orient 6) -> xoay -> 3000x2000, orient 1

@@ -4,7 +4,7 @@ build/
 Windows/bin/
 Windows/obj/
 
-# Icon tạo tự động từ assets/logo.png khi build
+# Icon tạo tự động từ assets/brand/logo.png khi build
 Windows/AppIcon.ico
 Windows/AppIcon.png
 

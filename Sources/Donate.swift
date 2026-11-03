@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Thông tin ủng hộ. Mã QR (assets/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
+/// Thông tin ủng hộ. Mã QR (assets/images/donate-qr.png) mở trang ủng hộ trên mktechvn.com:
 /// Ko-fi, PayPal, GitHub và chuyển khoản trong nước ở cùng một chỗ.
 enum Donate {
     /// Mọi cách ủng hộ (Ko-fi, PayPal, GitHub, chuyển khoản) ở cùng một trang

@@ -69,7 +69,7 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 | Platform | Download | Requirements |
 |---|---|---|
-| **macOS** | [SATF-1.2.2.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
+| **macOS** | [SATF-1.2.3.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
 | **Windows** | [SATF-Setup-1.2.2.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
 
 All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/releases).
@@ -229,7 +229,7 @@ Both apps build on a Mac.
 ./scripts/screenshots.sh
 ```
 
-The version number lives in [`VERSION`](VERSION). All icons are generated from [`assets/logo.png`](assets/logo.png).
+The version number lives in [`VERSION`](VERSION). All icons are generated from [`assets/brand/logo.png`](assets/brand/logo.png).
 
 <details>
 <summary><b>Project structure</b></summary>
@@ -254,7 +254,9 @@ The version number lives in [`VERSION`](VERSION). All icons are generated from [
 │   ├── SettingsWindow.cs       Settings
 │   ├── Updater.cs              Automatic updates
 │   └── installer.nsi           Windows installer (NSIS)
-├── assets/logo.png           Logo, source of every app icon
+├── assets/brand/logo.png     Logo, source of every app icon
+├── assets/icons/formats/     File-format icons for the radial menu
+├── assets/images/            Support QR code
 ├── docs/images/              README screenshots
 ├── scripts/screenshots.sh    Regenerates the screenshots
 ├── scripts/promo.sh          Renders the vertical promo video (build/promo/)
