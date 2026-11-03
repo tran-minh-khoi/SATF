@@ -1,0 +1,3 @@
+• New glass radial menu with smooth hover and zoom
+• Colored format icons
+• Formats ordered by what people use most for each file; ZIP always within reach

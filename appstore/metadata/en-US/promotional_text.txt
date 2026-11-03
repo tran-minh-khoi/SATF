@@ -1,0 +1,1 @@
+Shake a file while dragging it and a glass menu pops up under your cursor. Drop it on JPG, PDF, MP4, ZIP and more. No windows, no uploads.

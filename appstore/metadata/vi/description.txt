@@ -1,0 +1,28 @@
+SATF biến mỗi lần kéo file thành một công cụ đổi định dạng. Kéo file trong Finder, lắc nhẹ, menu tròn bằng kính hiện ngay dưới con trỏ. Thả file vào định dạng bạn muốn, file mới có ngay trong nháy mắt.
+
+ĐỔI ĐỊNH DẠNG MỘT CHẠM
+• Ảnh: HEIC, JPG, PNG, WebP, GIF, TIFF, BMP, AVIF, ICO
+• PDF sang JPG hoặc PNG (mỗi trang một ảnh), hoặc lấy chữ ra TXT
+• Word, RTF, ODT, TXT, Markdown, HTML sang PDF, DOCX, TXT…
+• Video: MOV sang MP4, hoặc tách tiếng ra M4A
+• Âm thanh: M4A, WAV, AIFF
+• Nén ZIP file và thư mục, giải nén file ZIP
+Menu xếp định dạng hay dùng nhất với từng loại file lên trước. Cầm nhiều file thì ZIP luôn đứng đầu.
+
+SỬA ẢNH NHANH
+• Ép ảnh xuống dưới dung lượng bạn chọn (mặc định 1 MB)
+• Nén, thu nhỏ, xoay ảnh
+• Xoá vị trí và thông tin máy chụp trước khi gửi
+• Ghép nhiều ảnh thành một ảnh dài
+• Gộp ảnh, PDF, văn bản thành một PDF, hoặc tách PDF thành từng trang
+
+KHAY
+Cất tạm file vào Khay trong lúc tìm file tiếp theo, rồi kéo ra cùng lúc.
+
+LÀM RIÊNG CHO MAC
+• Nằm gọn trên thanh menu
+• Lắc để mở, hoặc bấm phím tắt khi đang kéo file
+• Giao diện kính hợp với macOS
+• Chạy offline, file không bao giờ rời khỏi máy bạn
+• File gốc giữ nguyên. File mới được lưu vào Downloads hoặc thư mục bạn chọn
+• Tiếng Việt và tiếng Anh

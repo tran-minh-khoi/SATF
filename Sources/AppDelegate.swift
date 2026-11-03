@@ -15,7 +15,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         languageWatch = Settings.shared.$language.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
             self?.statusItem.menu = self?.makeMenu()
             SettingsWindowController.shared.retitle()
+            #if !APPSTORE
             AddOnsWindowController.shared.retitle()
+            #endif
         }
 
         detector.onMouseDown = { [weak self] in
@@ -32,10 +34,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HotKeyManager.shared.reload()
 
         Toast.show(L("SATF is ready", "SATF đã sẵn sàng"), Self.howToUse(), seconds: 5)
+        #if !APPSTORE
+        // Bản App Store: App Store tự lo cập nhật, không có gói tải thêm
         AddOnsWindowController.shared.showOnFirstLaunch()
 
         Updater.shared.onChange = { [weak self] in self?.statusItem.menu = self?.makeMenu() }
         Updater.shared.start()
+        #endif
     }
 
     /// Ví dụ: "Kéo file, giữ ⇧ Shift rồi lắc nhẹ, hoặc bấm ⌥⇧Space"
@@ -93,6 +98,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
+        #if APPSTORE
+        let header = menu.addItem(withTitle: "SATF", action: nil, keyEquivalent: "")
+        header.attributedTitle = NSAttributedString(string: "SATF", attributes: [.font: NSFont.boldSystemFont(ofSize: 13)])
+        header.isEnabled = false
+        menu.addItem(.separator())
+        #else
         // Bấm vào tên app ở đầu menu = mở cửa sổ ủng hộ
         let header = menu.addItem(withTitle: "SATF", action: #selector(openDonate), keyEquivalent: "")
         header.target = self
@@ -112,18 +123,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.attributedTitle = NSAttributedString(string: item.title, attributes: [.font: NSFont.boldSystemFont(ofSize: 13)])
             menu.addItem(.separator())
         }
+        #endif
 
         add(menu, L("Open Shelf", "Mở khay"), "tray", #selector(toggleShelf))
+        #if !APPSTORE
         add(menu, L("Add-ons…", "Gói tải thêm…"), "shippingbox", #selector(openSetup))
+        #endif
         add(menu, L("Settings…", "Cài đặt…"), "gearshape", #selector(openSettings), key: ",")
         menu.addItem(.separator())
         add(menu, L("Report a Bug…", "Báo lỗi…"), "ladybug", #selector(reportBug))
         add(menu, L("Suggest a Feature…", "Góp ý tính năng…"), "lightbulb", #selector(suggestFeature))
         menu.addItem(.separator())
+        #if APPSTORE
+        add(menu, L("About SATF", "Giới thiệu SATF"), "info.circle", #selector(openAbout))
+        #else
         add(menu, L("Support SATF…", "Ủng hộ SATF…"), "heart", #selector(openDonate))
         add(menu, L("About SATF", "Giới thiệu SATF"), "info.circle", #selector(openAbout))
         add(menu, L("Check for Updates…", "Kiểm tra bản mới…"), "arrow.triangle.2.circlepath", #selector(checkForUpdates))
         add(menu, L("Uninstall SATF…", "Gỡ SATF khỏi máy…"), "trash", #selector(uninstall))
+        #endif
         add(menu, L("Quit SATF", "Thoát"), "power", #selector(quit), key: "q")
 
         return menu

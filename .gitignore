@@ -13,3 +13,6 @@ Windows/AppIcon.png
 # Build output of the Windows test project
 tests/WindowsEditTests/bin/
 tests/WindowsEditTests/obj/
+
+# Mac App Store: provisioning profile tải từ developer.apple.com (không đưa lên git)
+appstore/embedded.provisionprofile

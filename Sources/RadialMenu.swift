@@ -288,16 +288,48 @@ struct RingSegment: Shape {
     var inner: CGFloat
     var outer: CGFloat
     var center: CGPoint
-    var gap: CGFloat = 3
+    var gap: CGFloat = 4
+    /// Bo 4 góc cho mềm như một mảnh kính
+    var cornerRadius: CGFloat = 9
+
+    private func pt(_ deg: Double, _ r: CGFloat) -> CGPoint {
+        let a = deg * .pi / 180
+        return CGPoint(x: center.x + CGFloat(cos(a)) * r, y: center.y + CGFloat(sin(a)) * r)
+    }
+
+    private func toward(_ a: CGPoint, _ b: CGPoint, _ d: CGFloat) -> CGPoint {
+        let dx = b.x - a.x, dy = b.y - a.y
+        let l = max(hypot(dx, dy), 0.001)
+        return CGPoint(x: a.x + dx / l * d, y: a.y + dy / l * d)
+    }
 
     func path(in rect: CGRect) -> Path {
-        let gapOuter = Double(gap / outer) * 180 / .pi
-        let gapInner = Double(gap / inner) * 180 / .pi
+        let go = Double(gap / outer) * 180 / .pi
+        let gi = Double(gap / inner) * 180 / .pi
+        let os = start + go, oe = end - go       // góc 2 đầu cung ngoài
+        let iS = start + gi, iE = end - gi       // góc 2 đầu cung trong
+        let cr = max(0, min(cornerRadius,
+                            (outer - inner) / 2 - 1,
+                            CGFloat((oe - os) * .pi / 180) * outer / 2 - 1,
+                            CGFloat((iE - iS) * .pi / 180) * inner / 2 - 1))
         var p = Path()
-        p.addArc(center: center, radius: outer,
-                 startAngle: .degrees(start + gapOuter), endAngle: .degrees(end - gapOuter), clockwise: false)
-        p.addArc(center: center, radius: inner,
-                 startAngle: .degrees(end - gapInner), endAngle: .degrees(start + gapInner), clockwise: true)
+        guard cr > 0.5 else {
+            p.addArc(center: center, radius: outer, startAngle: .degrees(os), endAngle: .degrees(oe), clockwise: false)
+            p.addArc(center: center, radius: inner, startAngle: .degrees(iE), endAngle: .degrees(iS), clockwise: true)
+            p.closeSubpath()
+            return p
+        }
+        let dO = Double(cr / outer) * 180 / .pi
+        let dI = Double(cr / inner) * 180 / .pi
+        let pOS = pt(os, outer), pOE = pt(oe, outer), pIE = pt(iE, inner), pIS = pt(iS, inner)
+
+        p.move(to: toward(pOS, pIS, cr))
+        p.addArc(tangent1End: pOS, tangent2End: pt(os + dO, outer), radius: cr)
+        p.addArc(center: center, radius: outer, startAngle: .degrees(os + dO), endAngle: .degrees(oe - dO), clockwise: false)
+        p.addArc(tangent1End: pOE, tangent2End: toward(pOE, pIE, cr), radius: cr)
+        p.addArc(tangent1End: pIE, tangent2End: pt(iE - dI, inner), radius: cr)
+        p.addArc(center: center, radius: inner, startAngle: .degrees(iE - dI), endAngle: .degrees(iS + dI), clockwise: true)
+        p.addArc(tangent1End: pIS, tangent2End: toward(pIS, pOS, cr), radius: cr)
         p.closeSubpath()
         return p
     }
@@ -306,6 +338,72 @@ struct RingSegment: Shape {
 // MARK: - Giao diện
 
 private enum SegmentState { case normal, active, hovered, disabled }
+
+enum RadialStyle {
+    /// true: luôn vẽ kính giả lập. Ảnh chụp bằng cacheDisplay (scripts/screenshots.sh) không bắt được Liquid Glass thật của macOS 26.
+    static var simulatedGlass = false
+}
+
+/// Một mảnh kính: Liquid Glass thật trên macOS 26, kính giả lập (mờ + viền sáng + độ dày) trên macOS 13–15.
+private struct GlassSurface<S: Shape>: View {
+    let shape: S
+    var tint: Color? = nil
+    var state: SegmentState = .normal
+
+    var body: some View {
+        #if compiler(>=6.2)
+        if #available(macOS 26.0, *), !RadialStyle.simulatedGlass {
+            Color.clear.glassEffect(Glass.regular.tint(nativeTint), in: shape)
+        } else {
+            simulated
+        }
+        #else
+        simulated
+        #endif
+    }
+
+    private var nativeTint: Color? {
+        guard let tint else { return nil }
+        switch state {
+        case .hovered: return tint.opacity(0.9)
+        case .active: return tint.opacity(0.4)
+        case .normal: return tint.opacity(0.14)
+        case .disabled: return nil
+        }
+    }
+
+    private var fill: AnyShapeStyle {
+        guard let tint else { return AnyShapeStyle(Color.clear) }
+        switch state {
+        case .hovered: return AnyShapeStyle(LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.72)],
+                                                           startPoint: .top, endPoint: .bottom))
+        case .active: return AnyShapeStyle(tint.opacity(0.28))
+        case .normal: return AnyShapeStyle(tint.opacity(0.10))
+        case .disabled: return AnyShapeStyle(Color.primary.opacity(0.02))
+        }
+    }
+
+    private var simulated: some View {
+        ZStack {
+            shape.fill(.ultraThinMaterial)
+            shape.fill(fill)
+            // Ánh sáng từ góc trên-trái: mặt kính sáng hơn ở phía trên
+            shape.fill(LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.03), .clear],
+                                      startPoint: .topLeading, endPoint: .bottomTrailing))
+            // Độ dày của kính: quầng sáng mờ chạy dọc mép trong
+            shape.stroke(Color.white.opacity(state == .hovered ? 0.42 : 0.2), lineWidth: 8)
+                .blur(radius: 5)
+                .clipShape(shape)
+            // Mép kính: sáng ở cạnh hướng về nguồn sáng, mờ dần ở cạnh đối diện
+            shape.stroke(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.2), .white.opacity(0.05), .white.opacity(0.4)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing),
+                         lineWidth: 1.1)
+        }
+        .compositingGroup()
+        .shadow(color: state == .hovered ? (tint ?? .black).opacity(0.45) : .black.opacity(0.16),
+                radius: state == .hovered ? 16 : 10, y: 4)
+    }
+}
 
 struct RadialMenuView: View {
     @ObservedObject var model: RadialModel
@@ -335,8 +433,8 @@ struct RadialMenuView: View {
         .opacity(appeared ? 1 : 0)
         .animation(.spring(response: 0.3, dampingFraction: 0.78), value: model.expanded)
         .animation(.spring(response: 0.34, dampingFraction: 0.78), value: model.showAll)
-        .animation(.spring(response: 0.22, dampingFraction: 0.7), value: model.hoveredItem)
-        .animation(.spring(response: 0.22, dampingFraction: 0.7), value: model.hoveredSide)
+        .animation(.spring(response: 0.26, dampingFraction: 0.62), value: model.hoveredItem)
+        .animation(.spring(response: 0.26, dampingFraction: 0.62), value: model.hoveredSide)
         .animation(.spring(response: 0.35, dampingFraction: 0.55), value: model.status)   // ✓ nảy nhẹ khi xong
         .onAppear {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) { appeared = true }
@@ -398,23 +496,30 @@ struct RadialMenuView: View {
                          big: Bool) -> some View {
         let shape = RingSegment(start: range.0, end: range.1, inner: inner, outer: outer, center: RadialGeo.center)
         let mid = (range.0 + range.1) / 2 * .pi / 180
-        let push: CGFloat = state == .hovered ? 9 : 0
+        let hovered = state == .hovered
+        let push: CGFloat = hovered ? 10 : 0
         let labelPoint = RadialGeo.point(angleRad: mid, radius: (inner + outer) / 2)
-
-        let fill: AnyShapeStyle
-        switch state {
-        case .hovered: fill = AnyShapeStyle(tint.gradient)
-        case .active: fill = AnyShapeStyle(tint.opacity(0.3))
-        case .normal: fill = AnyShapeStyle(tint.opacity(0.13))
-        case .disabled: fill = AnyShapeStyle(Color.primary.opacity(0.03))
-        }
-        let labelColor: Color = state == .hovered ? .white : (state == .disabled ? .secondary : .primary)
+        // Phóng to quanh tâm của chính ô đó (không phải tâm vòng tròn)
+        let anchor = UnitPoint(x: labelPoint.x / RadialGeo.size.width, y: labelPoint.y / RadialGeo.size.height)
+        let labelColor: Color = hovered ? .white : (state == .disabled ? .secondary : .primary)
+        // Đang trỏ vào một ô khác: các ô còn lại lùi lại một chút cho ô được chọn nổi bật
+        let dimmed = !hovered && model.hoveredItem != nil && state != .active
 
         return ZStack {
-            shape.fill(.regularMaterial)
-            shape.fill(fill)
-            shape.stroke(state == .hovered ? Color.white.opacity(0.55) : tint.opacity(state == .disabled ? 0.1 : 0.45),
-                         lineWidth: 1)
+            GlassSurface(shape: shape, tint: tint, state: state)
+            // Màu phủ khi đang mở / đang trỏ vào: vẽ riêng trên mặt kính để luôn thấy rõ,
+            // kể cả với Liquid Glass của macOS 26 (màu nhuộm của kính hệ thống rất nhạt)
+            if state == .active {
+                shape.fill(tint.opacity(0.22))
+            }
+            if hovered {
+                shape.fill(LinearGradient(colors: [tint.opacity(0.98), tint.opacity(0.78)], startPoint: .top, endPoint: .bottom))
+                    .overlay(shape.fill(LinearGradient(colors: [.white.opacity(0.35), .clear],
+                                                       startPoint: .top, endPoint: .center)))
+                    .overlay(shape.stroke(Color.white.opacity(0.75), lineWidth: 1.3))
+                    .shadow(color: tint.opacity(0.65), radius: 18, y: 4)
+                    .transition(.opacity)
+            }
             VStack(spacing: 3) {
                 if let icon {
                     Image(nsImage: icon)
@@ -423,31 +528,31 @@ struct RadialMenuView: View {
                         .interpolation(.high)
                         .scaledToFit()
                         .frame(width: 26, height: 26)
-                        .shadow(color: .black.opacity(state == .hovered ? 0.25 : 0.12), radius: 1.5, y: 1)
+                        .shadow(color: .black.opacity(hovered ? 0.3 : 0.15), radius: 2, y: 1)
                 } else if !symbol.isEmpty {
                     Image(systemName: symbol)
                         .font(.system(size: big ? 19 : 15, weight: .semibold))
                 }
-                Text(title)   // không có icon (ví dụ TIFF, BMP): chữ to hơn cho dễ đọc
-                    .font(.system(size: big ? 12 : (symbol.isEmpty && icon == nil ? 14 : 11), weight: .bold))
+                Text(title)   // không có icon (ví dụ AVIF): chữ to hơn cho dễ đọc
+                    .font(.system(size: big ? 12 : (symbol.isEmpty && icon == nil ? 14 : 11), weight: .semibold, design: .rounded))
                     .lineLimit(1)
                     .fixedSize()
             }
             .foregroundStyle(labelColor)
-            .scaleEffect(state == .hovered ? 1.12 : 1)
+            .shadow(color: hovered ? .black.opacity(0.25) : .clear, radius: 2, y: 1)
+            .scaleEffect(hovered ? 1.08 : 1)
             .position(labelPoint)
         }
-        .compositingGroup()
-        .shadow(color: state == .hovered ? tint.opacity(0.55) : Color.black.opacity(0.14),
-                radius: state == .hovered ? 14 : 5, y: 2)
+        .scaleEffect(hovered ? 1.09 : 1, anchor: anchor)
+        .opacity(dimmed ? 0.78 : 1)
         .offset(x: CGFloat(cos(mid)) * push, y: CGFloat(sin(mid)) * push)
+        .zIndex(hovered ? 1 : 0)
     }
 
     // Tâm: icon file đang cầm / trạng thái
     private var centerDisc: some View {
         ZStack {
-            Circle().fill(.regularMaterial)
-            Circle().strokeBorder(Color.primary.opacity(0.12))
+            GlassSurface(shape: Circle())
             switch model.status {
             case .idle:
                 Image(nsImage: NSWorkspace.shared.icon(forFile: model.files[0].path))
@@ -478,7 +583,6 @@ struct RadialMenuView: View {
             }
         }
         .frame(width: RadialGeo.centerRadius * 2, height: RadialGeo.centerRadius * 2)
-        .shadow(color: .black.opacity(0.18), radius: 8, y: 2)
         .position(RadialGeo.center)
     }
 
@@ -490,8 +594,7 @@ struct RadialMenuView: View {
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(.regularMaterial, in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.primary.opacity(0.1)))
+            .background { GlassSurface(shape: Capsule()) }
             .frame(maxWidth: 380)
             .position(x: RadialGeo.center.x, y: RadialGeo.size.height - 22)
     }
@@ -550,6 +653,8 @@ final class RadialInteractionView: NSView {
     override func draggingExited(_ sender: NSDraggingInfo?) { model.clearHover() }
     override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool { true }
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        // Đọc file từ pasteboard của lần thả: trong sandbox (bản App Store) đây là lúc macOS cấp quyền đọc các file đang kéo
+        _ = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
         hover(sender.draggingLocation)
         guard let target = model.currentTarget else { return false }
         DispatchQueue.main.async { [weak self] in self?.onActivate?(target) }
@@ -670,6 +775,7 @@ final class RadialMenuController {
                 return
             }
             // Thiếu gói: hỏi tải, tải xong tự chuyển tiếp (nén / giải nén / tách PDF không cần gói)
+            #if !APPSTORE
             if ![Format.zip, .extract, .splitPDF].contains(format), OfficeAddOn.needed(for: files) {
                 close()
                 AddOnsWindowController.shared.show(.needed) {
@@ -677,6 +783,7 @@ final class RadialMenuController {
                 }
                 return
             }
+            #endif
             model.clearHover()
             model.status = .working
             Self.convert(files, to: format, showProgressAfter: 1, onSlow: { [weak self] in

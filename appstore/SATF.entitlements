@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Bắt buộc với Mac App Store -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- Thư mục lưu file kết quả do người dùng tự chọn trong Cài đặt -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <!-- Giữ quyền thư mục đã chọn qua các lần mở app -->
+    <key>com.apple.security.files.bookmarks.app-scope</key>
+    <true/>
+    <!-- Nơi lưu mặc định: Downloads -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+    <key>com.apple.application-identifier</key>
+    <string>3Q96WBQ4PG.dev.tranminhkhoi.satf</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>3Q96WBQ4PG</string>
+</dict>
+</plist>

@@ -32,6 +32,9 @@ final class SettingsWindowController {
 struct SettingsView: View {
     @ObservedObject private var settings = Settings.shared
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    #if APPSTORE
+    @State private var outputFolder = OutputFolder.displayName
+    #endif
     /// Chiều cao cửa sổ; ảnh chụp cho README dùng giá trị lớn hơn để thấy hết các mục
     var height: CGFloat = 700
 
@@ -147,6 +150,31 @@ struct SettingsView: View {
                 Text(L("Archives", "Tệp nén"))
             }
 
+            #if APPSTORE
+            Section {
+                LabeledContent(L("Save to", "Lưu vào")) {
+                    HStack(spacing: 8) {
+                        Label(outputFolder, systemImage: "folder").lineLimit(1).truncationMode(.middle)
+                        Button(L("Change…", "Đổi…")) {
+                            if OutputFolder.choose() { outputFolder = OutputFolder.displayName }
+                        }
+                    }
+                }
+                if OutputFolder.chosen != nil {
+                    Button(L("Use Downloads", "Dùng thư mục Downloads")) {
+                        OutputFolder.reset()
+                        outputFolder = OutputFolder.displayName
+                    }
+                }
+            } header: {
+                Text(L("Converted files", "File kết quả"))
+            } footer: {
+                Text(L("New files are saved here. The originals are never changed.",
+                       "File mới được lưu vào đây, file gốc giữ nguyên."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            #else
             Section {
                 LabeledContent(L("Excel & PowerPoint add-on", "Gói Excel & PowerPoint")) {
                     Button(L("Manage…", "Quản lý…")) { AddOnsWindowController.shared.show() }
@@ -154,6 +182,7 @@ struct SettingsView: View {
             } header: {
                 Text(L("Add-ons", "Gói tải thêm"))
             }
+            #endif
 
             Section {
                 Toggle(L("Open at login", "Mở cùng macOS"), isOn: $launchAtLogin)
@@ -173,6 +202,13 @@ struct SettingsView: View {
                 Text(L("General", "Hệ thống"))
             }
 
+            #if APPSTORE
+            Section {
+                LabeledContent(L("Version", "Phiên bản"), value: Updater.currentVersion)
+            } header: {
+                Text(L("About", "Thông tin"))
+            }
+            #else
             Section {
                 Toggle(L("Check for updates automatically", "Tự kiểm tra bản mới"), isOn: $settings.autoUpdateCheck)
                 LabeledContent(L("Version \(Updater.currentVersion)", "Phiên bản \(Updater.currentVersion)")) {
@@ -186,6 +222,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            #endif
         }
         .formStyle(.grouped)
         .frame(minWidth: 420, idealWidth: 460, maxWidth: .infinity, minHeight: 360, idealHeight: height, maxHeight: .infinity)

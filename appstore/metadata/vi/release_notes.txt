@@ -1,0 +1,3 @@
+• Menu tròn kiểu kính mới, hiệu ứng rê chuột mượt và phóng to
+• Icon định dạng có màu
+• Định dạng được xếp theo mức hay dùng với từng loại file, ZIP luôn trong tầm tay

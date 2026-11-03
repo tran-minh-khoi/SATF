@@ -1,0 +1,28 @@
+SATF turns any file drag into a quick converter. Grab a file in Finder, give it a little shake, and a glass radial menu pops up right under your cursor. Drop the file on what you want and the new file is ready in a blink.
+
+CONVERT IN ONE MOVE
+• Images: HEIC, JPG, PNG, WebP, GIF, TIFF, BMP, AVIF, ICO
+• PDF to JPG or PNG (one image per page), or to text
+• Word, RTF, ODT, TXT, Markdown and HTML to PDF, DOCX, TXT and more
+• Video: MOV to MP4, or pull the audio out as M4A
+• Audio: M4A, WAV, AIFF
+• ZIP files and folders, or extract ZIP archives
+The menu puts the formats people pick most for that file first. Holding several files? ZIP comes first.
+
+QUICK IMAGE EDITS
+• Shrink a photo under a size you choose (1 MB by default)
+• Compress, resize, rotate
+• Remove location and camera info before you share
+• Stack several images into one tall picture
+• Merge images, PDFs and documents into one PDF, or split a PDF into pages
+
+SHELF
+Park files on the Shelf while you look for the next one, then drag them out together.
+
+MADE FOR THE MAC
+• Lives in the menu bar, stays out of your way
+• Shake to open, or press a keyboard shortcut while dragging
+• Glass design that feels at home on macOS
+• Works offline. Your files never leave your Mac
+• Originals are never changed. New files go to your Downloads folder, or any folder you choose
+• English and Vietnamese

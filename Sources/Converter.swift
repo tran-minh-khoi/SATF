@@ -176,6 +176,8 @@ enum Converter {
         case .unknown:
             all = [.zip]
         }
+        // Bản App Store: không có cách đổi Excel/PowerPoint (không tải được LibreOffice, không điều khiển được Office/iWork)
+        if !officeSupported && [.spreadsheet, .presentation].contains(kind(of: url)) { all = [.zip] }
         return all.filter { $0.rawValue != own }
     }
 
@@ -201,7 +203,17 @@ enum Converter {
     }
 
     /// Loại file đổi được sang PDF, nên gộp chung được vào một PDF
-    private static let pdfKinds: Set<FileKind> = [.image, .pdf, .document, .spreadsheet, .presentation]
+    private static let pdfKinds: Set<FileKind> = officeSupported
+        ? [.image, .pdf, .document, .spreadsheet, .presentation]
+        : [.image, .pdf, .document]
+
+    /// Đổi được Excel/PowerPoint không. Bản App Store chạy trong sandbox: không tải LibreOffice,
+    /// không nhờ Office/Numbers/Keynote qua AppleScript, nên tắt hẳn.
+    #if APPSTORE
+    static let officeSupported = false
+    #else
+    static let officeSupported = true
+    #endif
 
     /// Nhiều file:
     /// - "Gộp PDF" đứng đầu nếu file nào cũng đổi được sang PDF (PDF, Word, Excel, PowerPoint, ảnh, văn bản)
@@ -290,7 +302,7 @@ enum Converter {
 
     /// File mới nằm cạnh file gốc; trùng tên thì thêm " (1)", " (2)"...
     static func destination(for src: URL, ext: String, suffix: String = "") -> URL {
-        let dir = src.deletingLastPathComponent()
+        let dir = OutputFolder.directory(for: src)
         let base = src.deletingPathExtension().lastPathComponent + suffix
         var url = dir.appendingPathComponent(base).appendingPathExtension(ext)
         var n = 1
@@ -852,6 +864,7 @@ enum Converter {
 
     /// Excel/PowerPoint → PDF. Thử lần lượt: LibreOffice (chạy ngầm) → Microsoft Office → Numbers/Keynote.
     private static func officeExport(_ src: URL, ext: String, to dst: URL) throws {
+        guard officeSupported else { throw ConvertError(L("Excel & PowerPoint files can't be converted in this version", "Bản này chưa đổi được file Excel & PowerPoint")) }
         let fm = FileManager.default
         if let soffice = Tools.soffice {
             let tmp = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -934,7 +947,7 @@ enum Converter {
         for file in files {
             try fm.copyItem(at: file, to: uniqueURL(in: stage, name: file.lastPathComponent))
         }
-        let dst = uniqueURL(in: files[0].deletingLastPathComponent(), name: L("Archive", "Lưu trữ") + ".zip")
+        let dst = uniqueURL(in: OutputFolder.directory(for: files[0]), name: L("Archive", "Lưu trữ") + ".zip")
         try shell("/usr/bin/ditto", ["-c", "-k", "--sequesterRsrc", stage.path, dst.path])
         return dst
     }
@@ -942,7 +955,7 @@ enum Converter {
     /// Giải nén ra thư mục cạnh file. Bên trong chỉ có 1 thư mục/file thì đưa thẳng ra ngoài, khỏi lồng 2 lớp.
     private static func extract(_ src: URL) throws -> URL {
         let fm = FileManager.default
-        let dir = src.deletingLastPathComponent()
+        let dir = OutputFolder.directory(for: src)
         var base = src.deletingPathExtension()
         if base.pathExtension.lowercased() == "tar" { base = base.deletingPathExtension() }   // ví dụ .tar.gz
         let out = uniqueURL(in: dir, name: base.lastPathComponent)

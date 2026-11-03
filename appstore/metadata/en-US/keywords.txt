@@ -1,0 +1,1 @@
+convert,converter,heic,jpg,pdf,png,webp,zip,image,resize,compress,merge pdf,drag,menu bar,mp4,mov

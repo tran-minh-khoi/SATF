@@ -1,0 +1,14 @@
+Bundle ID:             dev.tranminhkhoi.satf
+SKU:                   satf-mac
+Primary category:      Utilities
+Secondary category:    Productivity
+Price:                 (chọn trong App Store Connect)
+Age rating:            4+ (trả lời "None" cho mọi mục)
+Copyright:             2026 Tran Minh Khoi
+Support URL:           https://tranminhkhoi.dev            (đổi nếu có trang hỗ trợ riêng)
+Marketing URL:         https://tranminhkhoi.dev
+Privacy Policy URL:    (bắt buộc, điền khi có trang trên website)
+App Privacy:           Data Not Collected
+Encryption:            Không (ITSAppUsesNonExemptEncryption = NO đã có trong Info.plist)
+Contact (App Review):  contact@tranminhkhoi.dev
+Screenshots:           build/appstore-screenshots/en-*.jpg (English), vi-*.jpg (Tiếng Việt), 2880x1800

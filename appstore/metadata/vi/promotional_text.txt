@@ -1,0 +1,1 @@
+Lắc nhẹ khi đang kéo file, menu kính hiện ngay dưới con trỏ. Thả vào JPG, PDF, MP4, ZIP… là xong. Không mở cửa sổ, không tải file lên mạng.
