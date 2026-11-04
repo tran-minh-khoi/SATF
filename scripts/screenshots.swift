@@ -9,7 +9,8 @@ let out = URL(fileURLWithPath: CommandLine.arguments[1])
 // Chế độ "appstore": ảnh 2880x1800 cho Mac App Store, ngôn ngữ ở tham số thứ 5 (en | vi)
 let appStoreMode = CommandLine.arguments.count > 4 && CommandLine.arguments[4] == "appstore"
 let storeLang = CommandLine.arguments.count > 5 ? CommandLine.arguments[5] : "en"
-if appStoreMode { Settings.shared.language = storeLang == "vi" ? .vi : .en }
+// Ảnh README (dùng chung cho cả README.vi.md) luôn là tiếng Anh, không theo ngôn ngữ của máy
+Settings.shared.language = appStoreMode && storeLang == "vi" ? .vi : .en
 let samples = URL(fileURLWithPath: CommandLine.arguments[2])
 func sample(_ n: String) -> URL { samples.appendingPathComponent(n) }
 
