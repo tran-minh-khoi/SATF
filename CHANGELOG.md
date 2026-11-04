@@ -9,16 +9,22 @@ All notable changes to SATF are listed here. Versions follow [Semantic Versionin
 - No automatic updates, add-ons, support window or uninstaller (the App Store handles these). Excel & PowerPoint conversion is not available.
 - `build-appstore.sh` builds a signed `.pkg`; listing text, review notes and screenshots in `appstore/`.
 
-## [1.2.3] — 2026-11-03
+## [1.3.0] — 2026-11-04
 
 ### Added
+- **Share** button on the Windows Shelf (Windows share sheet), like on the Mac.
 - Excel and Numbers files can now be converted to **PNG** and **JPG** (one image per page), like PowerPoint.
 
 ### Changed
+- New glass look from the App Store edition on the regular Mac build: radial menu slices, center and hint are rounded glass; the hovered slice lights up in its color at once.
+- **Shelf**: newest files come first; glass card with Share, Copy all and Clear as three round glass buttons below it; **Esc** closes the Shelf right away (Mac and Windows).
 - Radial menu: Convert targets show colored file-format icons (PDF, DOCX, ODT, RTF, TXT, HTML, CSV, JPG, PNG, WebP, HEIC, GIF, BMP, TIFF, ICO, MP4, MOV, M4A, WAV, AIFF, ZIP) instead of generic symbols.
 - Convert targets are ordered by what people usually pick for that file: HEIC → JPG first, JPG → PNG, PNG → JPG/ICO, old Word/ODT/RTF → DOCX first, Word → PDF, MOV → MP4, video → M4A (extract audio) before MOV.
 - **ZIP** always shows in the first five slots instead of the end, so it no longer hides behind "N more". With several files, ZIP is the first Convert option.
 - Project assets reorganized: `assets/brand/` (logo), `assets/icons/formats/` (format icons), `assets/images/` (support QR code).
+
+### Fixed
+- Mac notifications were unreadable in Dark Mode over a white background (white text on clear glass). They now have a solid glass backing.
 
 ## [1.2.2] — 2026-10-30
 

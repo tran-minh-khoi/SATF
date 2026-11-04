@@ -42,6 +42,63 @@
             </Setter>
         </Style>
 
+        <!-- Nút tròn bằng kính dưới khay (Share, Copy, Dọn khay), giống bản Mac. Tag = màu của nút -->
+        <Style x:Key="RoundButton" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="46"/>
+            <Setter Property="Margin" Value="8,0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform"><Setter.Value><ScaleTransform/></Setter.Value></Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Grid.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="3" Opacity="0.4" Color="#000000"/></Grid.Effect>
+                            <Ellipse Fill="#E6202028"/>
+                            <Ellipse x:Name="Tint" Fill="{TemplateBinding Background}" Opacity="0.22"/>
+                            <!-- Ánh sáng từ trên-trái như mặt kính -->
+                            <Ellipse>
+                                <Ellipse.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#40FFFFFF" Offset="0"/>
+                                        <GradientStop Color="#08FFFFFF" Offset="0.5"/>
+                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <Ellipse StrokeThickness="1.1">
+                                <Ellipse.Stroke>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#E6FFFFFF" Offset="0"/>
+                                        <GradientStop Color="#38FFFFFF" Offset="0.35"/>
+                                        <GradientStop Color="#10FFFFFF" Offset="0.7"/>
+                                        <GradientStop Color="#66FFFFFF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Ellipse.Stroke>
+                            </Ellipse>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tint" Property="Opacity" Value="0.5"/>
+                                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="1.08" ScaleY="1.08"/></Setter.Value></Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.92" ScaleY="0.92"/></Setter.Value></Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Ô file: icon thật của file + tên, chọn thì có nền & viền màu xanh -->
         <Style x:Key="Tile" TargetType="ListBoxItem">
             <Setter Property="Width" Value="84"/>
@@ -91,8 +148,25 @@
         </Style>
     </Window.Resources>
 
-    <Border x:Name="Card" Background="#F2202028" CornerRadius="16" BorderBrush="#30FFFFFF" BorderThickness="1" Margin="14" RenderTransformOrigin="0.5,0.5">
-        <Border.RenderTransform><ScaleTransform/></Border.RenderTransform>
+    <StackPanel x:Name="Card" Margin="14" RenderTransformOrigin="0.5,0.5">
+    <StackPanel.RenderTransform><ScaleTransform/></StackPanel.RenderTransform>
+    <!-- Khay vuông bằng kính: nền tối + ánh sáng chéo + viền sáng ở góc trên-trái -->
+    <Border CornerRadius="22" BorderThickness="1.1">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#F2303038" Offset="0"/>
+                <GradientStop Color="#F2202028" Offset="0.55"/>
+                <GradientStop Color="#F21C1C24" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#C0FFFFFF" Offset="0"/>
+                <GradientStop Color="#30FFFFFF" Offset="0.3"/>
+                <GradientStop Color="#10FFFFFF" Offset="0.7"/>
+                <GradientStop Color="#50FFFFFF" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.BorderBrush>
         <Border.Effect>
             <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.45" Color="#000000"/>
         </Border.Effect>
@@ -115,8 +189,6 @@
                     <!-- Kéo nút này = mang tất cả file trong khay đi cùng lúc -->
                     <Button x:Name="DragAllButton" Style="{StaticResource IconButton}" Content="&#xE7C2;" Cursor="SizeAll"
                             PreviewMouseLeftButtonDown="OnDragAllDown" PreviewMouseMove="OnDragAllMove"/>
-                    <Button x:Name="CopyAllButton" Style="{StaticResource IconButton}" Content="&#xE8C8;" Click="OnCopyAllClick"/>
-                    <Button x:Name="ClearButton" Style="{StaticResource IconButton}" Content="&#xE74D;" Click="OnClearAllClick"/>
                     <Button x:Name="CloseButton" Style="{StaticResource IconButton}" Content="&#xE711;" Click="OnCloseClick"/>
                 </StackPanel>
             </Grid>
@@ -148,4 +220,12 @@
             <TextBlock x:Name="HintText" FontSize="11" Foreground="#9A9AA6" HorizontalAlignment="Center" Margin="0,9,0,0" TextTrimming="CharacterEllipsis"/>
         </StackPanel>
     </Border>
+
+    <!-- 3 nút tròn tách khỏi khay -->
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+        <Button x:Name="ShareButton" Style="{StaticResource RoundButton}" Background="#388FFF" Content="&#xE72D;" Click="OnShareClick"/>
+        <Button x:Name="CopyAllButton" Style="{StaticResource RoundButton}" Background="#34C759" Content="&#xE8C8;" Click="OnCopyAllClick"/>
+        <Button x:Name="ClearButton" Style="{StaticResource RoundButton}" Background="#FF453A" Content="&#xE74D;" Click="OnClearAllClick"/>
+    </StackPanel>
+    </StackPanel>
 </Window>

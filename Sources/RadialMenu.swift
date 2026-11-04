@@ -341,15 +341,19 @@ struct RingSegment: Shape {
 
 // MARK: - Giao diện
 
-private enum SegmentState { case normal, active, hovered, disabled }
+enum SegmentState { case normal, active, hovered, disabled }
 
 /// Một mảnh kính: nền mờ của hệ thống (như bản cũ) + ánh sáng vẽ bằng vector. Nhẹ, đổi trạng thái tức thì.
 /// Không dùng glassEffect (Liquid Glass) của macOS 26 cho menu tròn: mỗi mảnh Liquid Glass tự chạy animation
 /// khoảng nửa giây khi đổi trạng thái và phải tính lại nền phía sau, làm hover bị trễ.
-private struct GlassSurface<S: Shape>: View {
+/// Dùng chung cho menu tròn, khay và thông báo.
+struct GlassSurface<S: Shape>: View {
     let shape: S
     var tint: Color? = nil
     var state: SegmentState = .normal
+    /// Lớp nền đặc (màu cửa sổ của hệ thống) dưới mặt kính, 0…1. Chỗ nào có chữ thì cần (khoảng 0.6):
+    /// chỉ có kính thì ở Dark Mode chữ trắng chìm mất khi phía sau là nền trắng.
+    var base: Double = 0
 
     private var fill: Color {
         guard let tint else { return .clear }
@@ -363,6 +367,7 @@ private struct GlassSurface<S: Shape>: View {
     var body: some View {
         ZStack {
             shape.fill(.ultraThinMaterial)
+            if base > 0 { shape.fill(Color(nsColor: .windowBackgroundColor).opacity(base)) }
             shape.fill(fill)
             // Ánh sáng từ góc trên-trái: mặt kính sáng hơn ở phía trên
             shape.fill(LinearGradient(colors: [.white.opacity(0.24), .white.opacity(0.04), .clear],
@@ -562,7 +567,7 @@ struct RadialMenuView: View {
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background { GlassSurface(shape: Capsule()) }
+            .background { GlassSurface(shape: Capsule(), base: 0.6) }
             .frame(maxWidth: 380)
             .position(x: RadialGeo.center.x, y: RadialGeo.size.height - 22)
     }

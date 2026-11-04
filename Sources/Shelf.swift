@@ -11,10 +11,13 @@ final class ShelfModel: ObservableObject {
     /// File cuối cùng được bấm, làm mốc cho Shift-click
     private var anchor: URL?
 
+    /// File mới nhất đứng đầu khay. File đã có trong khay thì được đưa lên đầu.
     func add(_ urls: [URL]) {
-        for url in urls.map({ $0.standardizedFileURL }) where !files.contains(url) {
-            files.append(url)
-        }
+        var new: [URL] = []
+        for url in urls.map({ $0.standardizedFileURL }) where !new.contains(url) { new.append(url) }
+        guard !new.isEmpty else { return }
+        files.removeAll { new.contains($0) }
+        files.insert(contentsOf: new, at: 0)
     }
 
     func remove(_ url: URL) {
@@ -91,9 +94,7 @@ final class ShelfController {
             host.frame = NSRect(origin: .zero, size: size)
             panel = FloatingPanel(contentRect: NSRect(origin: .zero, size: size))
             panel.contentView = host
-            panel.hasShadow = true
-            self.panel = panel
-            DispatchQueue.main.async { panel.invalidateShadow() }
+            self.panel = panel   // bóng do từng mảnh kính tự vẽ
         }
 
         if !panel.isVisible {
@@ -107,11 +108,12 @@ final class ShelfController {
             }
             panel.setFrameOrigin(origin)
         }
-        panel.orderFrontRegardless()
+        // Nhận phím ngay (Esc để đóng) mà không kéo app khác ra khỏi màn hình: cửa sổ nổi không kích hoạt app
+        panel.makeKeyAndOrderFront(nil)
         installKeys()
     }
 
-    /// ⌘A chọn tất cả, Delete bỏ file đang chọn khỏi khay, Esc bỏ chọn (chỉ khi khay đang được focus)
+    /// ⌘A chọn tất cả, Delete bỏ file đang chọn khỏi khay, Esc đóng khay (khi khay đang được focus)
     private func installKeys() {
         guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -124,7 +126,7 @@ final class ShelfController {
                 guard !self.model.selection.isEmpty else { return event }
                 self.model.removeSelected()
             case 53:           // Esc
-                if self.model.selection.isEmpty { self.close() } else { self.model.selection.removeAll() }
+                self.close()
             default:
                 return event
             }
@@ -151,22 +153,49 @@ struct ShelfView: View {
     @State private var targeted = false
 
     var body: some View {
+        VStack(spacing: 12) {
+            card
+            // 3 nút tròn bằng kính, tách khỏi khay vuông
+            HStack(spacing: 16) {
+                ZStack {
+                    GlassCircle(tint: .blue)
+                    ShareButton(items: { model.files }).frame(width: 44, height: 44)
+                }
+                .frame(width: 44, height: 44)
+
+                roundButton("doc.on.clipboard", tint: .green, help: L("Copy all", "Copy tất cả")) {
+                    guard !model.files.isEmpty else { NSSound.beep(); return }
+                    Clipboard.copy(model.files)
+                    model.showFlash(L("Copied \(model.files.count) files", "Đã copy \(model.files.count) file"))
+                }
+
+                roundButton("trash", tint: .red, help: L("Clear shelf", "Dọn khay")) {
+                    withAnimation(.easeOut(duration: 0.2)) { model.clear() }
+                }
+            }
+            .opacity(model.files.isEmpty ? 0.45 : 1)
+            .disabled(model.files.isEmpty)
+        }
+        .padding(14)   // chừa chỗ cho bóng
+    }
+
+    private var card: some View {
         VStack(spacing: 10) {
             header
 
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(targeted ? Color.accentColor.opacity(0.1) : Color.primary.opacity(0.025))
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(targeted ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.03))
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [7, 5]))
-                    .foregroundStyle(targeted ? Color.accentColor : Color.secondary.opacity(0.55))
+                    .foregroundStyle(targeted ? Color.accentColor : Color.secondary.opacity(0.5))
 
                 if model.files.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "arrow.down.doc")
                             .font(.system(size: 28, weight: .light))
                         Text(L("Drop files here", "Kéo file vào đây"))
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
                     }
                     .foregroundStyle(targeted ? Color.accentColor : Color.secondary)
                 } else {
@@ -192,23 +221,19 @@ struct ShelfView: View {
             }
 
             Text(model.flash ?? hint)
-                .font(.system(size: 11))
+                .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(model.flash == nil ? Color.secondary : Color.green)
                 .lineLimit(1)
         }
         .padding(12)
         .frame(width: 300)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.12))
-        )
+        .background { GlassSurface(shape: RoundedRectangle(cornerRadius: 22, style: .continuous), base: 0.6) }
     }
 
     private var hint: String {
         if model.selection.count > 1 { return L("\(model.selection.count) selected · drag to move them together", "Đã chọn \(model.selection.count) file · kéo để mang đi cùng lúc") }
-        if model.files.count > 1 { return L("⌘A selects all · drag files out to use them", "⌘A chọn tất cả · kéo file ra ngoài để dùng") }
-        return L("Drag files out to use them", "Kéo file ra ngoài để dùng")
+        if model.files.count > 1 { return L("⌘A selects all · Esc closes", "⌘A chọn tất cả · Esc để đóng") }
+        return L("Drag files out to use them · Esc closes", "Kéo file ra ngoài để dùng · Esc để đóng")
     }
 
     private var header: some View {
@@ -216,12 +241,12 @@ struct ShelfView: View {
             Image(systemName: "tray.full.fill")
                 .foregroundStyle(Color.accentColor)
             Text(L("Shelf", "Khay"))
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .lineLimit(1)
                 .fixedSize()   // không bị rớt dòng khi thanh tiêu đề chật
             if !model.files.isEmpty {
                 Text("\(model.files.count)")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
                     .padding(.horizontal, 6).padding(.vertical, 1)
                     .background(Capsule().fill(Color.primary.opacity(0.1)))
             }
@@ -240,33 +265,51 @@ struct ShelfView: View {
             .help(L("Drag to take all files", "Kéo để mang tất cả file đi"))
             .opacity(model.files.isEmpty ? 0.35 : 1)
 
-            ShareButton(items: { model.files })
-                .frame(width: 22, height: 22)
-                .opacity(model.files.isEmpty ? 0.35 : 1)
-
-            iconButton("doc.on.clipboard", help: L("Copy all", "Copy tất cả")) {
-                guard !model.files.isEmpty else { NSSound.beep(); return }
-                Clipboard.copy(model.files)
-                model.showFlash(L("Copied \(model.files.count) files", "Đã copy \(model.files.count) file"))
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(Color.primary.opacity(0.08)))
+                    .contentShape(Circle())
             }
-            .opacity(model.files.isEmpty ? 0.35 : 1)
-
-            iconButton("trash", help: L("Clear shelf", "Dọn khay")) { model.clear() }
-                .opacity(model.files.isEmpty ? 0.35 : 1)
-
-            iconButton("xmark", help: L("Close", "Đóng khay"), action: onClose)
+            .buttonStyle(.plain)
+            .help(L("Close (Esc)", "Đóng khay (Esc)"))
         }
     }
 
-    private func iconButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
+    private func roundButton(_ symbol: String, tint: Color, help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 12, weight: .medium))
-                .frame(width: 22, height: 22)
-                .contentShape(Rectangle())
+            ZStack {
+                GlassCircle(tint: tint)
+                Image(systemName: symbol)
+                    .font(.system(size: 16, weight: .semibold))
+            }
+            .frame(width: 44, height: 44)
+            .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(GlassPress())
         .help(help)
+    }
+}
+
+/// Nút tròn bằng kính, sáng lên khi trỏ vào
+private struct GlassCircle: View {
+    let tint: Color
+    @State private var hovering = false
+    var body: some View {
+        GlassSurface(shape: Circle(), tint: tint, state: hovering ? .hovered : .normal, base: 0.45)
+            .scaleEffect(hovering ? 1.08 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: hovering)
+            .onHover { hovering = $0 }
+    }
+}
+
+/// Bấm thì lún nhẹ
+private struct GlassPress: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .animation(.spring(response: 0.18, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 

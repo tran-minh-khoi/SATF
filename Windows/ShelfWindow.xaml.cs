@@ -53,9 +53,10 @@ public partial class ShelfWindow : Window
         TitleText.Text = L("Shelf", "Khay");
         EmptyTitle.Text = L("Drop files here", "Kéo file vào đây");
         DragAllButton.ToolTip = L("Drag to take all files", "Kéo để mang tất cả file đi");
+        ShareButton.ToolTip = L("Share", "Chia sẻ");
         CopyAllButton.ToolTip = L("Copy all", "Copy tất cả");
         ClearButton.ToolTip = L("Clear shelf", "Dọn khay");
-        CloseButton.ToolTip = L("Close", "Đóng khay");
+        CloseButton.ToolTip = L("Close (Esc)", "Đóng khay (Esc)");
         Refresh();
     }
 
@@ -65,12 +66,12 @@ public partial class ShelfWindow : Window
         EmptyPlaceholder.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         CountBadge.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
         CountText.Text = _items.Count.ToString();
-        DragAllButton.IsEnabled = CopyAllButton.IsEnabled = ClearButton.IsEnabled = !empty;
+        DragAllButton.IsEnabled = ShareButton.IsEnabled = CopyAllButton.IsEnabled = ClearButton.IsEnabled = !empty;
 
         int selected = FileListBox.SelectedItems.Count;
         HintText.Text = selected > 1 ? L($"{selected} selected · drag to move them together", $"Đã chọn {selected} file · kéo để mang đi cùng lúc")
-            : _items.Count > 1 ? L("Ctrl+A selects all · drag files out to use them", "Ctrl+A chọn tất cả · kéo file ra ngoài để dùng")
-            : L("Drag files out to use them", "Kéo file ra ngoài để dùng");
+            : _items.Count > 1 ? L("Ctrl+A selects all · Esc closes", "Ctrl+A chọn tất cả · Esc để đóng")
+            : L("Drag files out to use them · Esc closes", "Kéo file ra ngoài để dùng · Esc để đóng");
         HintText.Foreground = UI.Secondary;
     }
 
@@ -83,17 +84,26 @@ public partial class ShelfWindow : Window
         t.Start();
     }
 
+    /// File mới nhất đứng đầu khay (cả nhóm giữ thứ tự); file đã có thì được đưa lên đầu.
     public void AddFiles(IEnumerable<string> filePaths)
     {
+        int at = 0;
         foreach (var p in filePaths)
         {
-            if ((File.Exists(p) || Directory.Exists(p)) && !_items.Any(i => i.Path.Equals(p, StringComparison.OrdinalIgnoreCase)))
+            if (!File.Exists(p) && !Directory.Exists(p)) continue;
+            if (_items.FirstOrDefault(i => i.Path.Equals(p, StringComparison.OrdinalIgnoreCase)) is { } old)
             {
-                _items.Add(new ShelfItem { Path = p, Icon = UI.FileIcon(p) });
-                // File mới vào khay: phóng nhẹ từ nhỏ lên
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => PopIn(_items[^1]));
+                int i = _items.IndexOf(old);
+                if (i < at) continue;   // trùng trong cùng một lần thả
+                _items.Move(i, at++);
+                continue;
             }
+            var item = new ShelfItem { Path = p, Icon = UI.FileIcon(p) };
+            _items.Insert(at++, item);
+            // File mới vào khay: phóng nhẹ từ nhỏ lên
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => PopIn(item));
         }
+        if (at > 0) FileListBox.ScrollIntoView(_items[0]);
     }
 
     private void PopIn(ShelfItem item)
@@ -142,11 +152,7 @@ public partial class ShelfWindow : Window
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
         if (ctrl && e.Key == Key.A) { FileListBox.SelectAll(); e.Handled = true; }
         else if (e.Key is Key.Delete or Key.Back && FileListBox.SelectedItems.Count > 0) { Remove(SelectedPaths()); e.Handled = true; }
-        else if (e.Key == Key.Escape)
-        {
-            if (FileListBox.SelectedItems.Count > 0) FileListBox.UnselectAll(); else Hide();
-            e.Handled = true;
-        }
+        else if (e.Key == Key.Escape) { Hide(); e.Handled = true; }
     }
 
     // MARK: - Nút
@@ -160,6 +166,40 @@ public partial class ShelfWindow : Window
         sc.AddRange(_items.Select(i => i.Path).ToArray());
         System.Windows.Clipboard.SetFileDropList(sc);
         Flash(L($"Copied {_items.Count} files", $"Đã copy {_items.Count} file"));
+    }
+
+    // Bảng Share của Windows (Nearby sharing, Mail, Teams...)
+    private bool _shareHooked;
+
+    private void OnShareClick(object sender, RoutedEventArgs e)
+    {
+        if (_items.Count == 0) return;
+        try
+        {
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            var dtm = Windows.ApplicationModel.DataTransfer.DataTransferManagerInterop.GetForWindow(hwnd);
+            if (!_shareHooked) { dtm.DataRequested += OnShareRequested; _shareHooked = true; }
+            Windows.ApplicationModel.DataTransfer.DataTransferManagerInterop.ShowShareUIForWindow(hwnd);
+        }
+        catch (Exception ex) { Crash.Log(ex); }
+    }
+
+    private async void OnShareRequested(Windows.ApplicationModel.DataTransfer.DataTransferManager sender,
+                                        Windows.ApplicationModel.DataTransfer.DataRequestedEventArgs args)
+    {
+        var deferral = args.Request.GetDeferral();
+        try
+        {
+            var paths = await Dispatcher.InvokeAsync(() => _items.Select(i => i.Path).ToList());
+            var files = new List<Windows.Storage.IStorageItem>();
+            foreach (var p in paths)
+                files.Add(Directory.Exists(p) ? await Windows.Storage.StorageFolder.GetFolderFromPathAsync(p)
+                                              : await Windows.Storage.StorageFile.GetFileFromPathAsync(p));
+            args.Request.Data.Properties.Title = paths.Count == 1 ? System.IO.Path.GetFileName(paths[0]) : $"{paths.Count} files";
+            args.Request.Data.SetStorageItems(files);
+        }
+        catch (Exception ex) { Crash.Log(ex); args.Request.FailWithDisplayText(ex.Message); }
+        finally { deferral.Complete(); }
     }
 
     private void OnClearAllClick(object sender, RoutedEventArgs e) => _items.Clear();

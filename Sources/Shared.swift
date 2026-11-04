@@ -71,7 +71,8 @@ struct ShareButton: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSButton {
         let image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: L("Share", "Chia sẻ")) ?? NSImage()
-        let button = NSButton(image: image, target: context.coordinator, action: #selector(Coordinator.share(_:)))
+        let button = NSButton(image: image.withSymbolConfiguration(.init(pointSize: 16, weight: .semibold)) ?? image,
+                              target: context.coordinator, action: #selector(Coordinator.share(_:)))
         button.isBordered = false
         button.toolTip = L("Share", "Chia sẻ")
         return button
@@ -186,10 +187,9 @@ struct ToastView: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 11)
         .frame(width: 320)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.primary.opacity(0.1)))
+        // Nền kính có lớp đặc bên dưới: chữ đọc được dù phía sau thông báo là nền trắng hay đen
+        .background { GlassSurface(shape: RoundedRectangle(cornerRadius: 16, style: .continuous), base: 0.72) }
         .scaleEffect(hovering && toast.clickable ? 1.02 : 1)
-        .shadow(color: .black.opacity(0.18), radius: 10, y: 3)
         .padding(12)   // chừa chỗ cho bóng
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
