@@ -52,35 +52,22 @@ struct WindowDragArea: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
-/// Nút L("Share", "Chia sẻ") dùng menu share chuẩn của macOS (AirDrop, Mail, Tin nhắn...).
-struct ShareButton: NSViewRepresentable {
-    let items: () -> [URL]
-
-    final class Coordinator: NSObject {
-        var items: () -> [URL]
-        init(items: @escaping () -> [URL]) { self.items = items }
-        @objc func share(_ sender: NSButton) {
-            let files = items()
-            guard !files.isEmpty else { NSSound.beep(); return }
-            NSApp.activate(ignoringOtherApps: true)
-            NSSharingServicePicker(items: files).show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
-        }
+/// Menu share chuẩn của macOS (AirDrop, Mail, Tin nhắn...), hiện ngay dưới `view`.
+enum Share {
+    static func show(_ files: [URL], from view: NSView?) {
+        guard !files.isEmpty, let view else { NSSound.beep(); return }
+        NSApp.activate(ignoringOtherApps: true)
+        NSSharingServicePicker(items: files).show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
     }
+}
 
-    func makeCoordinator() -> Coordinator { Coordinator(items: items) }
+/// Giữ NSView nằm dưới một view SwiftUI, để gắn menu/popover của AppKit vào đúng chỗ.
+final class ViewAnchor { weak var view: NSView? }
 
-    func makeNSView(context: Context) -> NSButton {
-        let image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: L("Share", "Chia sẻ")) ?? NSImage()
-        let button = NSButton(image: image.withSymbolConfiguration(.init(pointSize: 16, weight: .semibold)) ?? image,
-                              target: context.coordinator, action: #selector(Coordinator.share(_:)))
-        button.isBordered = false
-        button.toolTip = L("Share", "Chia sẻ")
-        return button
-    }
-
-    func updateNSView(_ nsView: NSButton, context: Context) {
-        context.coordinator.items = items
-    }
+struct AnchorView: NSViewRepresentable {
+    let anchor: ViewAnchor
+    func makeNSView(context: Context) -> NSView { let v = NSView(); anchor.view = v; return v }
+    func updateNSView(_ nsView: NSView, context: Context) { anchor.view = nsView }
 }
 
 /// Thông báo nhỏ góc trên-phải màn hình. Chỉ có một thông báo tại một thời điểm, cái mới thay cái cũ.

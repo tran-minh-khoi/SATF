@@ -155,25 +155,20 @@ struct ShelfView: View {
     var body: some View {
         VStack(spacing: 12) {
             card
-            // 3 nút tròn bằng kính, tách khỏi khay vuông
-            HStack(spacing: 16) {
-                ZStack {
-                    GlassCircle(tint: .blue)
-                    ShareButton(items: { model.files }).frame(width: 44, height: 44)
+            // 3 nút tròn tách khỏi khay vuông
+            HStack(spacing: 14) {
+                RoundButton(symbol: "square.and.arrow.up", help: L("Share", "Chia sẻ")) { view in
+                    Share.show(model.files, from: view)
                 }
-                .frame(width: 44, height: 44)
-
-                roundButton("doc.on.clipboard", tint: .green, help: L("Copy all", "Copy tất cả")) {
-                    guard !model.files.isEmpty else { NSSound.beep(); return }
+                RoundButton(symbol: "doc.on.clipboard", help: L("Copy all", "Copy tất cả")) { _ in
                     Clipboard.copy(model.files)
                     model.showFlash(L("Copied \(model.files.count) files", "Đã copy \(model.files.count) file"))
                 }
-
-                roundButton("trash", tint: .red, help: L("Clear shelf", "Dọn khay")) {
+                RoundButton(symbol: "trash", help: L("Clear shelf", "Dọn khay"), destructive: true) { _ in
                     withAnimation(.easeOut(duration: 0.2)) { model.clear() }
                 }
             }
-            .opacity(model.files.isEmpty ? 0.45 : 1)
+            .opacity(model.files.isEmpty ? 0.4 : 1)
             .disabled(model.files.isEmpty)
         }
         .padding(14)   // chừa chỗ cho bóng
@@ -277,35 +272,42 @@ struct ShelfView: View {
         }
     }
 
-    private func roundButton(_ symbol: String, tint: Color, help: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            ZStack {
-                GlassCircle(tint: tint)
-                Image(systemName: symbol)
-                    .font(.system(size: 16, weight: .semibold))
-            }
-            .frame(width: 44, height: 44)
-            .contentShape(Circle())
+}
+
+/// Nút tròn đơn giản: nền xám mờ, trỏ vào thì sáng lên và icon đổi màu, bấm thì lún nhẹ.
+/// `action` nhận NSView của nút (để menu Share hiện ngay dưới nút).
+private struct RoundButton: View {
+    let symbol: String
+    let help: String
+    var destructive = false
+    let action: (NSView?) -> Void
+    @State private var hovering = false
+    @State private var anchor = ViewAnchor()
+
+    var body: some View {
+        Button { action(anchor.view) } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(hovering ? (destructive ? Color.red : Color.accentColor) : Color.primary)
+                .frame(width: 40, height: 40)
+                .background {
+                    Circle().fill(.regularMaterial)
+                    Circle().fill(Color(nsColor: .windowBackgroundColor).opacity(0.5))
+                    Circle().fill(Color.primary.opacity(hovering ? 0.12 : 0))
+                }
+                .overlay(Circle().strokeBorder(Color.primary.opacity(hovering ? 0.25 : 0.12)))
+                .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+                .background(AnchorView(anchor: anchor))
+                .contentShape(Circle())
         }
-        .buttonStyle(GlassPress())
+        .buttonStyle(PressScale())
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
         .help(help)
     }
 }
 
-/// Nút tròn bằng kính, sáng lên khi trỏ vào
-private struct GlassCircle: View {
-    let tint: Color
-    @State private var hovering = false
-    var body: some View {
-        GlassSurface(shape: Circle(), tint: tint, state: hovering ? .hovered : .normal, base: 0.45)
-            .scaleEffect(hovering ? 1.08 : 1)
-            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: hovering)
-            .onHover { hovering = $0 }
-    }
-}
-
-/// Bấm thì lún nhẹ
-private struct GlassPress: ButtonStyle {
+private struct PressScale: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.9 : 1)

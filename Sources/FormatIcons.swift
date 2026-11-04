@@ -4,9 +4,6 @@ import AppKit
 /// build.sh thu nhỏ và chép vào SATF.app/Contents/Resources/FormatIcons/.
 /// Định dạng không có icon thì dùng SF Symbol như cũ.
 enum FormatIcons {
-    /// Icon chỉ có một màu (nét đen trên nền trong suốt): vẽ dạng template để theo màu chữ, không bị chìm ở Dark Mode
-    private static let monochrome: Set<String> = ["csv"]
-
     /// nil = đã tìm và không có icon (ví dụ AVIF): nhớ lại để không tìm file mỗi lần vẽ menu
     private static var cache: [String: NSImage?] = [:]
 
@@ -18,7 +15,6 @@ enum FormatIcons {
             url = URL(fileURLWithPath: "assets/icons/formats/\(name).png")
         }
         let image = url.flatMap(NSImage.init(contentsOf:))
-        image?.isTemplate = monochrome.contains(name)
         cache[name] = .some(image)
         return image
     }

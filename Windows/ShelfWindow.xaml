@@ -42,14 +42,15 @@
             </Setter>
         </Style>
 
-        <!-- Nút tròn bằng kính dưới khay (Share, Copy, Dọn khay), giống bản Mac. Tag = màu của nút -->
+        <!-- Nút tròn dưới khay (Share, Copy, Dọn khay), giống bản Mac: nền xám, trỏ vào thì sáng lên và icon đổi màu.
+             Tag = màu icon khi trỏ vào -->
         <Style x:Key="RoundButton" TargetType="Button">
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="46"/>
-            <Setter Property="Margin" Value="8,0"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Margin" Value="7,0"/>
+            <Setter Property="Foreground" Value="#EDEDF2"/>
             <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
-            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="15"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
             <Setter Property="RenderTransform"><Setter.Value><ScaleTransform/></Setter.Value></Setter>
@@ -57,41 +58,21 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Grid.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="3" Opacity="0.4" Color="#000000"/></Grid.Effect>
-                            <Ellipse Fill="#E6202028"/>
-                            <Ellipse x:Name="Tint" Fill="{TemplateBinding Background}" Opacity="0.22"/>
-                            <!-- Ánh sáng từ trên-trái như mặt kính -->
-                            <Ellipse>
-                                <Ellipse.Fill>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#40FFFFFF" Offset="0"/>
-                                        <GradientStop Color="#08FFFFFF" Offset="0.5"/>
-                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Ellipse.Fill>
-                            </Ellipse>
-                            <Ellipse StrokeThickness="1.1">
-                                <Ellipse.Stroke>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#E6FFFFFF" Offset="0"/>
-                                        <GradientStop Color="#38FFFFFF" Offset="0.35"/>
-                                        <GradientStop Color="#10FFFFFF" Offset="0.7"/>
-                                        <GradientStop Color="#66FFFFFF" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Ellipse.Stroke>
-                            </Ellipse>
+                            <Grid.Effect><DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35" Color="#000000"/></Grid.Effect>
+                            <Ellipse x:Name="Bg" Fill="#F2202028" Stroke="#30FFFFFF" StrokeThickness="1"/>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Tint" Property="Opacity" Value="0.5"/>
-                                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="1.08" ScaleY="1.08"/></Setter.Value></Setter>
+                                <Setter TargetName="Bg" Property="Fill" Value="#F2383842"/>
+                                <Setter TargetName="Bg" Property="Stroke" Value="#60FFFFFF"/>
+                                <Setter Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.92" ScaleY="0.92"/></Setter.Value></Setter>
+                                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.9" ScaleY="0.9"/></Setter.Value></Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -223,9 +204,9 @@
 
     <!-- 3 nút tròn tách khỏi khay -->
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-        <Button x:Name="ShareButton" Style="{StaticResource RoundButton}" Background="#388FFF" Content="&#xE72D;" Click="OnShareClick"/>
-        <Button x:Name="CopyAllButton" Style="{StaticResource RoundButton}" Background="#34C759" Content="&#xE8C8;" Click="OnCopyAllClick"/>
-        <Button x:Name="ClearButton" Style="{StaticResource RoundButton}" Background="#FF453A" Content="&#xE74D;" Click="OnClearAllClick"/>
+        <Button x:Name="ShareButton" Style="{StaticResource RoundButton}" Tag="#388FFF" Content="&#xE72D;" Click="OnShareClick"/>
+        <Button x:Name="CopyAllButton" Style="{StaticResource RoundButton}" Tag="#388FFF" Content="&#xE8C8;" Click="OnCopyAllClick"/>
+        <Button x:Name="ClearButton" Style="{StaticResource RoundButton}" Tag="#FF453A" Content="&#xE74D;" Click="OnClearAllClick"/>
     </StackPanel>
     </StackPanel>
 </Window>
