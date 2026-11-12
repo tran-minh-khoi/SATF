@@ -5,9 +5,14 @@ All notable changes to SATF are listed here. Versions follow [Semantic Versionin
 ## Mac App Store edition (nhánh `appstore`)
 
 - Radial menu in a glass style (rounded glass slices with light and rim); the hovered slice lights up in its color at once, zooms and pops out.
-- Sandboxed. New files go to Downloads, or a folder chosen in Settings → Converted files.
+- Sandboxed. New files go to a folder the user picks (asked the first time a file is converted, changeable in Settings → Converted files).
 - No automatic updates, add-ons, support window or uninstaller (the App Store handles these). Excel & PowerPoint conversion is not available.
 - `build-appstore.sh` builds a signed `.pkg`; listing text, review notes and screenshots in `appstore/`.
+
+## [1.3.1] — 2026-11-12
+
+### Changed
+- **Shake without holding a key**: a fresh install now opens the radial menu with a simple shake while dragging, no Shift needed (Mac and Windows). If you changed the key in Settings before, your choice is kept.
 
 ## [1.3.0] — 2026-11-04
 
