@@ -24,5 +24,5 @@ MADE FOR THE MAC
 • Shake to open, or press a keyboard shortcut while dragging
 • Glass design that feels at home on macOS
 • Works offline. Your files never leave your Mac
-• Originals are never changed. New files go to your Downloads folder, or any folder you choose
+• Originals are never changed. New files go to a folder you choose
 • English and Vietnamese

@@ -770,6 +770,13 @@ final class RadialMenuController {
     /// Chuyển file và báo kết quả ở góc màn hình. Lâu hơn `showProgressAfter` giây thì hiện "Đang chuyển…".
     static func convert(_ files: [URL], to format: Format, showProgressAfter delay: Double,
                         onSlow: @escaping () -> Void = {}, onFinish: @escaping (Bool) -> Void = { _ in }) {
+        #if APPSTORE
+        // Apple yêu cầu người dùng tự chọn nơi lưu (Guideline 2.4.5): lần đầu thì hỏi
+        if OutputFolder.chosen == nil {
+            onSlow()   // đóng menu tròn để không che hộp thoại
+            guard OutputFolder.choose() else { onFinish(false); return }
+        }
+        #endif
         let what = files.count == 1 ? files[0].lastPathComponent : L("\(files.count) files", "\(files.count) file")
         let slow = DispatchWorkItem {
             onSlow()

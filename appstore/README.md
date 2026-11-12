@@ -7,7 +7,7 @@ Nhánh `appstore`. Bản App Store build bằng `./build-appstore.sh` (cờ biê
 | | Bản web (`build.sh`) | Bản App Store (`build-appstore.sh`) |
 |---|---|---|
 | Sandbox | Không | Có (bắt buộc) |
-| Lưu file kết quả | Cạnh file gốc | Downloads, hoặc thư mục chọn trong Cài đặt → File kết quả |
+| Lưu file kết quả | Cạnh file gốc | Thư mục người dùng tự chọn (hỏi ở lần đổi đầu tiên, đổi lại trong Cài đặt → File kết quả) |
 | Excel & PowerPoint | Có (LibreOffice / Office / iWork) | Không (sandbox không cho tải LibreOffice hay điều khiển app khác) |
 | Tự cập nhật, Ủng hộ, Gói tải thêm, Gỡ cài đặt | Có | Không (App Store lo cập nhật & gỡ, không nhận ủng hộ ngoài In-App Purchase) |
 | Ký | Developer ID + notarize | Apple Distribution + Mac Installer Distribution |
@@ -43,7 +43,7 @@ Số build (`CFBundleVersion`) = số commit nên luôn tăng; muốn đặt tay
 APPSTORE=1 ./scripts/run-dev.sh      # bản App Store có sandbox, ký ad-hoc, mở luôn
 ./scripts/screenshots.sh build/appstore-screenshots appstore   # ảnh 2880x1800 tiếng Anh + tiếng Việt
 ```
-Kiểm tra trong bản chạy thử: lắc khi kéo file → đổi định dạng → file mới xuất hiện trong Downloads; Cài đặt → File kết quả → Đổi… sang thư mục khác rồi thử lại; Khay; Copy; nén / giải nén ZIP; ảnh WebP.
+Kiểm tra trong bản chạy thử: lắc khi kéo file → đổi định dạng → lần đầu hiện hộp thoại chọn thư mục → file mới xuất hiện trong thư mục đó; Cài đặt → File kết quả → Đổi… sang thư mục khác rồi thử lại; Khay; Copy; nén / giải nén ZIP; ảnh WebP.
 
 ## Điền App Store Connect
 
