@@ -118,7 +118,7 @@ All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/r
 </table>
 
 1. **Start dragging** any file or several files.
-2. **Shake** it left and right while holding <kbd>Shift</kbd>, or press the shortcut.
+2. **Shake** it left and right, or press the shortcut.
 3. **Drop** it on:
    - **Convert →** (top right) a format. More than six choices? Hover **More** to open the full circle.
    - **Edit →** (bottom right) an edit: rotate, resize, compress, under 1 MB, clean info, merge PDF, stack. The original is never changed.
