@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build nhanh bản chạy thử để xem giao diện: chỉ chip của máy này, tối ưu như bản phát hành (-O), ký ad-hoc, không tạo DMG, rồi mở luôn.
 # Bản SATF đang chạy (nếu có) sẽ được tắt trước. Chạy bản phát hành: ./build.sh
-#   APPSTORE=1 ./scripts/run-dev.sh   chạy thử bản Mac App Store: bật sandbox, lưu file vào Downloads
+#   APPSTORE=1 ./scripts/run-dev.sh   chạy thử bản Mac App Store: bật sandbox, lần đầu đổi file sẽ hỏi thư mục lưu
 set -euo pipefail
 cd "$(dirname "$0")/.."
 APP=build/dev/SATF.app

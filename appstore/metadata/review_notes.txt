@@ -5,8 +5,8 @@ How to try it:
 2. While dragging, shake the mouse left and right a few times. A round menu appears under the cursor.
    (Or, while dragging, press Option + Shift + Space.)
 3. Move onto "Convert", then drop the file on a format, e.g. PDF or JPG.
-4. A notification shows where the new file was saved (Downloads by default). Click it to reveal the file.
+4. The first time, SATF asks where to save new files with a standard Open dialog (there is no preset location). Pick any folder. A notification then shows where the new file was saved. Click it to reveal the file.
 
 Other features: the Shelf (menu bar icon > Open Shelf) and Settings (menu bar icon > Settings…), where the output folder can be changed.
 
-The app works fully offline, collects no data and needs no account. It reads only the files the user drops on it and writes new files to Downloads or a folder the user picks.
+The app works fully offline, collects no data and needs no account. It reads only the files the user drops on it and writes new files only to the folder the user picks.

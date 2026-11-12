@@ -3,12 +3,13 @@ import AppKit
 /// Nơi lưu file kết quả.
 /// - Bản tải từ web: ngay cạnh file gốc.
 /// - Bản Mac App Store (sandbox, build với -D APPSTORE): app không được ghi vào thư mục của file gốc,
-///   nên lưu vào thư mục người dùng chọn trong Cài đặt, mặc định là Downloads
-///   (quyền com.apple.security.files.downloads.read-write). Thư mục tự chọn được giữ quyền qua security-scoped bookmark.
+///   nên lưu vào thư mục người dùng tự chọn (hỏi ở lần đổi file đầu tiên, đổi lại được trong Cài đặt).
+///   Apple không cho đặt sẵn nơi lưu như Downloads (Guideline 2.4.5). Quyền thư mục được giữ qua security-scoped bookmark.
 enum OutputFolder {
     static func directory(for src: URL) -> URL {
         #if APPSTORE
-        return chosen ?? downloads
+        // Chưa chọn thì ghi cạnh file gốc sẽ bị sandbox chặn và báo lỗi; RadialMenuController.convert hỏi trước nên hiếm khi xảy ra
+        return chosen ?? src.deletingLastPathComponent()
         #else
         return src.deletingLastPathComponent()
         #endif
@@ -18,12 +19,7 @@ enum OutputFolder {
     private static let key = "outputFolderBookmark"
     private static var active: URL?
 
-    static var downloads: URL {
-        FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
-    }
-
-    /// Thư mục người dùng đã chọn (nil: dùng Downloads)
+    /// Thư mục người dùng đã chọn (nil: chưa chọn)
     static var chosen: URL? {
         if let active { return active }
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
@@ -39,7 +35,7 @@ enum OutputFolder {
     }
 
     static var displayName: String {
-        FileManager.default.displayName(atPath: (chosen ?? downloads).path)
+        chosen.map { FileManager.default.displayName(atPath: $0.path) } ?? L("Not chosen yet", "Chưa chọn")
     }
 
     /// Hỏi người dùng chọn thư mục lưu. Trả về true nếu đã đổi.
@@ -52,22 +48,16 @@ enum OutputFolder {
         panel.canCreateDirectories = true
         panel.prompt = L("Choose", "Chọn")
         panel.message = L("Converted and edited files will be saved here", "File sau khi chuyển và sửa sẽ được lưu ở đây")
-        panel.directoryURL = chosen ?? downloads
+        panel.directoryURL = chosen
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url,
               let data = try? url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
         else { return false }
-        reset()
+        active?.stopAccessingSecurityScopedResource()
+        active = nil
         UserDefaults.standard.set(data, forKey: key)
         _ = chosen
         return true
-    }
-
-    /// Quay về Downloads
-    static func reset() {
-        active?.stopAccessingSecurityScopedResource()
-        active = nil
-        UserDefaults.standard.removeObject(forKey: key)
     }
     #endif
 }

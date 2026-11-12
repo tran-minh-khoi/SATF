@@ -155,22 +155,16 @@ struct SettingsView: View {
                 LabeledContent(L("Save to", "Lưu vào")) {
                     HStack(spacing: 8) {
                         Label(outputFolder, systemImage: "folder").lineLimit(1).truncationMode(.middle)
-                        Button(L("Change…", "Đổi…")) {
+                        Button(OutputFolder.chosen == nil ? L("Choose…", "Chọn…") : L("Change…", "Đổi…")) {
                             if OutputFolder.choose() { outputFolder = OutputFolder.displayName }
                         }
-                    }
-                }
-                if OutputFolder.chosen != nil {
-                    Button(L("Use Downloads", "Dùng thư mục Downloads")) {
-                        OutputFolder.reset()
-                        outputFolder = OutputFolder.displayName
                     }
                 }
             } header: {
                 Text(L("Converted files", "File kết quả"))
             } footer: {
-                Text(L("New files are saved here. The originals are never changed.",
-                       "File mới được lưu vào đây, file gốc giữ nguyên."))
+                Text(L("New files are saved here. If no folder is chosen yet, SATF asks the first time you convert. The originals are never changed.",
+                       "File mới được lưu vào đây. Chưa chọn thì SATF sẽ hỏi ở lần đổi file đầu tiên. File gốc giữ nguyên."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

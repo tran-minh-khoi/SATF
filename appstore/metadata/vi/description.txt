@@ -24,5 +24,5 @@ LÀM RIÊNG CHO MAC
 • Lắc để mở, hoặc bấm phím tắt khi đang kéo file
 • Giao diện kính hợp với macOS
 • Chạy offline, file không bao giờ rời khỏi máy bạn
-• File gốc giữ nguyên. File mới được lưu vào Downloads hoặc thư mục bạn chọn
+• File gốc giữ nguyên. File mới được lưu vào thư mục bạn chọn
 • Tiếng Việt và tiếng Anh
