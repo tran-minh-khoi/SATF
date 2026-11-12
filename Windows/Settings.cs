@@ -26,7 +26,7 @@ public class AppSettings
     /// App nén ZIP: "builtin" = SATF, còn lại là id trong Archivers
     public string Compressor { get; set; } = Archivers.Builtin;
     public bool ShakeEnabled { get; set; } = true;
-    public ShakeModifier ShakeModifier { get; set; } = ShakeModifier.Shift;
+    public ShakeModifier ShakeModifier { get; set; } = ShakeModifier.None;
     /// Chỉ còn để đọc cài đặt của bản cũ (3 mức). Bản mới dùng ShakeLevel.
     public Sensitivity Sensitivity { get; set; } = Sensitivity.Normal;
     /// Độ nhạy lắc 1…10: 1 = nhạy nhất, 10 = phải lắc mạnh. 0 = chưa chọn (lấy từ Sensitivity cũ).

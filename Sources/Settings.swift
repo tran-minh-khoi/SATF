@@ -145,13 +145,8 @@ final class Settings: ObservableObject {
         compressor = defaults.string(forKey: "compressor") ?? "builtin"
         shakeEnabled = defaults.object(forKey: "shakeEnabled") as? Bool ?? true
 
-        if let raw = defaults.string(forKey: "shakeModifier"), let m = ModifierChoice(rawValue: raw) {
-            shakeModifier = m
-        } else if defaults.object(forKey: "requireShift") as? Bool == false {
-            shakeModifier = .none   // cài đặt cũ của bản trước
-        } else {
-            shakeModifier = .shift
-        }
+        // Mặc định chỉ cần lắc, không phải giữ phím nào
+        shakeModifier = defaults.string(forKey: "shakeModifier").flatMap(ModifierChoice.init) ?? .none
 
         if let level = defaults.object(forKey: "shakeLevel") as? Int {
             shakeLevel = min(max(level, ShakeLevel.range.lowerBound), ShakeLevel.range.upperBound)
