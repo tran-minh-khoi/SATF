@@ -61,9 +61,9 @@ Không tải lên mạng, không cần tài khoản, không quảng cáo. Mọi 
 
 | Hệ điều hành | Tải về | Yêu cầu |
 |---|---|---|
-| **macOS** | [SATF-1.2.3.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
+| **macOS** | [Tải file .dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 trở lên · Apple Silicon và Intel |
 | **macOS (App Store)** | [Mac App Store](https://apps.apple.com/us/app/satf-drag-shake-convert/id6829996655?mt=12) | macOS 13 trở lên · Apple Silicon và Intel |
-| **Windows** | [SATF-Setup-1.2.2.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
+| **Windows** | [Tải bộ cài (.exe)](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) trở lên · 64-bit |
 
 **macOS:** mở DMG, kéo SATF vào Applications rồi mở là chạy (app đã được Apple ký và kiểm tra).
 
