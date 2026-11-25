@@ -69,9 +69,9 @@ No uploads, no accounts, no ads. Everything happens on your computer.
 
 | Platform | Download | Requirements |
 |---|---|---|
-| **macOS** | [SATF-1.2.3.dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
+| **macOS** | [Download .dmg](https://github.com/tran-minh-khoi/SATF/releases/latest) | macOS 13 Ventura or later · Apple Silicon & Intel |
 | **macOS (App Store)** | [Mac App Store](https://apps.apple.com/us/app/satf-drag-shake-convert/id6829996655?mt=12) | macOS 13 Ventura or later · Apple Silicon & Intel |
-| **Windows** | [SATF-Setup-1.2.2.exe](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
+| **Windows** | [Download installer (.exe)](https://github.com/tran-minh-khoi/SATF/releases/latest) | Windows 10 (2004) or later · 64-bit |
 
 All versions are on the [Releases page](https://github.com/tran-minh-khoi/SATF/releases).
 
